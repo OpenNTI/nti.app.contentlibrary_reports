@@ -52,6 +52,7 @@ setup(
     tests_require=TESTS_REQUIRE,
     install_requires=[
         'setuptools',
+        'nti.app.contenttypes.reports',
         'nti.contentlibrary',
         'six',
         'zope.component',
