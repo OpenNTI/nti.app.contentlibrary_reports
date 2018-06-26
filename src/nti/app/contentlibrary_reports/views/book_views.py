@@ -33,7 +33,6 @@ _UserBookProgressStat = \
     namedtuple('UserBookProgressStat',
                ('userinfo', 'total_view_time', 'last_accessed'))
 
-
 @view_config(context=IContentPackageBundle,
 			 name=VIEW_BOOK_PROGRESS_REPORT)
 class BookProgressReportPdf(AbstractBookReportView):
@@ -47,7 +46,7 @@ class BookProgressReportPdf(AbstractBookReportView):
 		last_view_time = ''
 		if user_stats.last_view_time:
 			last_view_time = self._adjust_date(user_stats.last_view_time)
-			last_view_time = self.format_datetime(last_view_time)
+			last_view_time = self._format_datetime(last_view_time)
 		return last_view_time
 
 	def _get_total_view_time(self, user_stats):
@@ -83,6 +82,6 @@ class BookProgressReportPdf(AbstractBookReportView):
 				user_result = _UserBookProgressStat(user_info,
 													total_view_time,
 													last_view_time)
-				user_data.add(user_result)
+				user_data.append(user_result)
 			options['user_data'] = user_data
 		return options

@@ -22,7 +22,7 @@
 			<td><para style="header_r">Last Seen</para></td>
 		</tr>
 		<tr tal:repeat="item options/user_data">
-			<td><para style="data" tal:content="item/userinfo/displayname">Name</para></td>
+			<td><para style="data" tal:content="item/userinfo/display">Name</para></td>
 			<td><para style="data" tal:content="item/userinfo/username">Username</para></td>
 			<td><para style="data" tal:content="item/userinfo/email">Email</para></td>
 			<td align="left" tal:content="item/total_view_time | default">Total View Time</td>

@@ -4,4 +4,4 @@
 .. $Id$
 """
 
-ALL_USERS = 'ALL_USERS'
+from nti.app.contentlibrary_reports import MessageFactory as _

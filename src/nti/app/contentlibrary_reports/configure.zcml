@@ -6,7 +6,6 @@
             xmlns:ext="http://nextthought.com/ntp/ext"
             xmlns:sp="http://nextthought.com/ntp/securitypolicy"
             xmlns:zcml="http://namespaces.zope.org/zcml"
-            xmlns:z3c="http://namespaces.zope.org/z3c"
             xmlns:rep="http://nextthought.com/reports"
             i18n_domain="nti.app.contentlibrary_reports">
 
@@ -50,6 +49,7 @@
 
 
     <!-- Student participation report -->
+    <!--
     <z3c:template
         template="templates/user_book_report.rml"
         for=".views.user_views.UserBookProgressReportPdf"
@@ -63,4 +63,5 @@
         permission="zope.Public"
         manager="nti.app.contenttypes.reports.interfaces.IPDFReportHeaderManager" />
 
+    -->
 </configure>
