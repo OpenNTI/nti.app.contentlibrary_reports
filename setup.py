@@ -4,6 +4,9 @@ from setuptools import setup, find_packages
 entry_points = {
     'console_scripts': [
     ],
+    "z3c.autoinclude.plugin": [
+        'target = nti.app',
+    ],
 }
 
 TESTS_REQUIRE = [
@@ -52,6 +55,7 @@ setup(
     tests_require=TESTS_REQUIRE,
     install_requires=[
         'setuptools',
+        'nti.app.contenttypes.reports',
         'nti.contentlibrary',
         'six',
         'zope.component',

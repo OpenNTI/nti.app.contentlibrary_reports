@@ -1,0 +1,33 @@
+<metal:block
+	xmlns:tal="http://xml.zope.org/namespaces/tal"
+	xmlns:metal="http://xml.zope.org/namespaces/metal"
+	tal:define="options view/options">
+
+    <para style="normal" spaceAfter=".1in" tal:condition="not:options/user_data">
+        There is no user data for this book.
+    </para>
+	<para style="normal" spaceAfter=".1in" tal:condition="options/user_data">
+		This report presents an overview of the learner progress on this book.
+	</para>
+
+	<blockTable style='default'
+				colWidths="20% 20% 28% 14% 18%"
+				tal:condition="options/user_data"
+				repeatRows="1">
+		<tr>
+			<td><para style="header">Name</para></td>
+			<td><para style="header">Username</para></td>
+			<td><para style="header">Email</para></td>
+			<td><para style="header">View Time (min)</para></td>
+			<td><para style="header_r">Last Accessed</para></td>
+		</tr>
+		<tr tal:repeat="item options/user_data">
+			<td><para style="data" tal:content="item/userinfo/display">Name</para></td>
+			<td><para style="data" tal:content="item/userinfo/username">Username</para></td>
+			<td><para style="data" tal:content="item/userinfo/email">Email</para></td>
+			<td align="left" tal:content="item/total_view_time | default">Total View Time</td>
+			<td align="right" tal:content="item/last_accessed | default">Last Seen</td>
+		</tr>
+	</blockTable>
+
+</metal:block>
