@@ -11,15 +11,15 @@
 	</para>
 
 	<blockTable style='default'
-				colWidths="20% 20% 30% 12% 18%"
+				colWidths="20% 20% 28% 14% 18%"
 				tal:condition="options/user_data"
 				repeatRows="1">
 		<tr>
 			<td><para style="header">Name</para></td>
 			<td><para style="header">Username</para></td>
 			<td><para style="header">Email</para></td>
-			<td><para style="header">View Time</para></td>
-			<td><para style="header_r">Last Seen</para></td>
+			<td><para style="header">View Time (min)</para></td>
+			<td><para style="header_r">Last Accessed</para></td>
 		</tr>
 		<tr tal:repeat="item options/user_data">
 			<td><para style="data" tal:content="item/userinfo/display">Name</para></td>
