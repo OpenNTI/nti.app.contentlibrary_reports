@@ -49,7 +49,6 @@
 
 
     <!-- Student participation report -->
-    <!--
     <z3c:template
         template="templates/user_book_report.rml"
         for=".views.user_views.UserBookProgressReportPdf"
@@ -63,5 +62,4 @@
         permission="zope.Public"
         manager="nti.app.contenttypes.reports.interfaces.IPDFReportHeaderManager" />
 
-    -->
 </configure>

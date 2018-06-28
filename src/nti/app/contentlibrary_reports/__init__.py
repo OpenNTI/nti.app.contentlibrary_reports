@@ -12,4 +12,6 @@ import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory(__name__)
 
 
-VIEW_BOOK_PROGRESS_REPORT = 'BookProgressReportPdf'
+VIEW_BOOK_PROGRESS_REPORT = 'BookProgressReport'
+
+VIEW_USER_BOOK_PROGRESS_REPORT = 'UserBookProgressReport'

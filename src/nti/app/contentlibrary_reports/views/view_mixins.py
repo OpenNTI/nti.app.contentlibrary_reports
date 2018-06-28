@@ -14,13 +14,11 @@ from pyramid.httpexceptions import HTTPForbidden
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.security.management import checkPermission
-
 from nti.app.contentlibrary_reports.interfaces import ACT_VIEW_BOOK_REPORTS
 
 from nti.app.contenttypes.reports.views.view_mixins import AbstractReportView
 
-from nti.dataserver.authorization import is_admin_or_site_admin
+from nti.appserver.pyramid_authorization import has_permission
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -32,10 +30,7 @@ class AbstractBookReportView(AbstractReportView):
     """
 
     def _check_access(self):
-        if is_admin_or_site_admin(self.remoteUser):
-            return True
-
-        if not checkPermission(ACT_VIEW_BOOK_REPORTS.id, self.book):
+        if not has_permission(ACT_VIEW_BOOK_REPORTS, self.book, self.request):
             raise HTTPForbidden()
 
     @Lazy
