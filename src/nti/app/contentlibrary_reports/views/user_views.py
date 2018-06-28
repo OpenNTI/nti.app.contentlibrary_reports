@@ -39,7 +39,8 @@ _UserBookProgressStat = \
                 'content_unit_count',
                 'content_data_count',
                 'total_view_time',
-                'last_accessed'))
+                'last_accessed',
+                'last_view_time_date'))
 
 @view_config(context=IUserBundleRecord,
              name=VIEW_USER_BOOK_PROGRESS_REPORT)
@@ -78,7 +79,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
     def book(self):
         return self.context.Bundle
 
-    def _get_last_view_time(self, last_view_time):
+    def _get_display_last_view_time(self, last_view_time):
         if last_view_time:
             last_view_time = self._adjust_date(last_view_time)
             last_view_time = self._format_datetime(last_view_time)
@@ -127,14 +128,16 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                     else:
                         last_view_time = max(last_view_time,
                                              section_last_view_time)
-        last_view_time = self._get_last_view_time(last_view_time)
+        last_view_time_date = last_view_time
+        last_view_time = self._get_display_last_view_time(last_view_time)
         total_view_time = self._get_total_view_time(total_view_time)
         return _UserBookProgressStat(chapter_unit.title,
                                      complete_content_count,
                                      content_count,
                                      content_data_count,
                                      total_view_time,
-                                     last_view_time)
+                                     last_view_time,
+                                     last_view_time_date)
 
     def __call__(self):
         self._check_access()
@@ -150,8 +153,21 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         if book_stats is not None and package is not None:
             stat_map = {x.ntiid:x for x in book_stats.get_stats()}
             chapter_data = list()
+            aggregate_complete_count = 0
+            aggregate_content_unit_count = 0
+            last_accessed = None
             for content_unit in package.children or ():
                 chapter_progress_stat = self._get_chapter_stats(content_unit, stat_map)
                 chapter_data.append(chapter_progress_stat)
+                aggregate_complete_count += chapter_progress_stat.complete_content_count
+                aggregate_content_unit_count += chapter_progress_stat.content_unit_count
+                if last_accessed is None:
+                    last_accessed = chapter_progress_stat.last_view_time_date
+                elif chapter_progress_stat.last_view_time_date:
+                    last_accessed = max(last_accessed,
+                                        chapter_progress_stat.last_view_time_date)
             options['chapter_data'] = chapter_data
+            options['last_accessed'] = self._get_display_last_view_time(last_accessed)
+            options['aggregate_complete_count'] = aggregate_complete_count
+            options['aggregate_content_unit_count'] = aggregate_content_unit_count
         return options

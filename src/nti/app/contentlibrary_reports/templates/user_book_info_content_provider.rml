@@ -10,6 +10,7 @@
 	<td tal:content="username">Username</td>
 </tr>
 <tr>
+	<td>Book:</td>
 	<td>${view/__parent__/book_name}</td>
 </tr>
 

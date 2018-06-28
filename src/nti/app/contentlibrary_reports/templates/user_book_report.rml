@@ -3,15 +3,22 @@
     xmlns:metal="http://xml.zope.org/namespaces/metal"
     tal:define="options view/options">
 
-    <para style="normal" spaceAfter=".1in" tal:condition="not:options/chapter_data">
+    <para style="normal" spaceAfter=".2in" tal:condition="not:options/chapter_data">
         There is no user data for this book.
     </para>
-    <para style="normal" spaceAfter=".1in" tal:condition="options/chapter_data">
+    <para style="normal" spaceAfter=".2in" tal:condition="options/chapter_data">
         This report presents an overview of the learner progress on this book.
     </para>
 
+    <hr width="100%" />
+
+    <para style="subdesc" spaceAfter=".2in" spaceBefore=".2in" tal:condition="options/chapter_data">
+        ${options/aggregate_complete_count} of ${options/aggregate_content_unit_count} Hours Complete -
+        Last accessed on ${options/last_accessed}
+    </para>
+
     <blockTable style='default'
-                colWidths="40% 16% 16% 28%"
+                colWidths="50% 14% 14% 22%"
                 tal:condition="options/chapter_data"
                 repeatRows="1">
         <tr>
