@@ -10,8 +10,6 @@ from __future__ import absolute_import
 
 from collections import namedtuple
 
-from math import floor
-
 from pyramid.view import view_config
 
 from zope import component
@@ -36,8 +34,12 @@ logger = __import__('logging').getLogger(__name__)
 
 _UserBookProgressStat = \
     namedtuple('UserBookProgressStat',
-               ('title', 'content_unit_count', 'content_data_count',
-                'total_view_time', 'last_accessed'))
+               ('title',
+                'complete_content_count',
+                'content_unit_count',
+                'content_data_count',
+                'total_view_time',
+                'last_accessed'))
 
 @view_config(context=IUserBundleRecord,
              name=VIEW_USER_BOOK_PROGRESS_REPORT)
@@ -50,8 +52,11 @@ class UserBookProgressReportPdf(AbstractBookReportView):
 
     report_title = _(u'User Progress Report')
 
-    # 15 minute floor; this will probably need to be site driven
+    #: 15 minute floor; this will probably need to be site driven
     VIEW_TIME_MINUTE_FLOOR = 15
+
+    #: Each unit must be viewed 15 minutes to be considered complete
+    VIEW_CONTENT_UNIT_COMPLETE_SECONDS = 15 * 60
 
     def _can_admin_user(self, user):
         # Verify a site admin is administering a user in their site.
@@ -80,33 +85,52 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         return last_view_time
 
     def _get_total_view_time(self, total_view_time):
+        result = ''
         if total_view_time:
             in_minutes = total_view_time / 60
-            in_base = floor(in_minutes / self.VIEW_TIME_MINUTE_FLOOR)
-            result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
+            result = int(in_minutes)
         return str(result)
+
+    def _get_children_view_time(self, parent_unit, stat_map):
+        """
+        Get the total view time for our given unit's children, recursively
+        """
+        result = 0
+        for child_unit in parent_unit.children or ():
+            content_stats = stat_map.get(child_unit.ntiid)
+            if content_stats and content_stats.total_view_time:
+                result += content_stats.total_view_time
+            result += self._get_children_view_time(child_unit, stat_map)
+        return result
 
     def _get_chapter_stats(self, chapter_unit, stat_map):
         total_view_time = 0
         last_view_time = None
         content_count = 0
         content_data_count = 0
+        complete_content_count = 0
         for content_unit in chapter_unit.children or ():
-            # TODO: Should we go recursive here (probably)?
             content_count += 1
+            section_view_time = 0
             content_stats = stat_map.get(content_unit.ntiid)
-            if content_stats and content_stats.total_view_time:
+            section_view_time += getattr(content_stats, 'total_view_time', 0)
+            section_view_time += self._get_children_view_time(content_unit, stat_map)
+            if section_view_time:
                 content_data_count += 1
-                total_view_time += content_stats.total_view_time
-                if content_stats.last_view_time:
+                if section_view_time > self.VIEW_CONTENT_UNIT_COMPLETE_SECONDS:
+                    complete_content_count += 1
+                total_view_time += section_view_time
+                section_last_view_time = getattr(content_stats, 'last_view_time')
+                if section_last_view_time:
                     if last_view_time is None:
-                        last_view_time = content_stats.last_view_time
+                        last_view_time = section_last_view_time
                     else:
                         last_view_time = max(last_view_time,
-                                             content_stats.last_view_time)
+                                             section_last_view_time)
         last_view_time = self._get_last_view_time(last_view_time)
         total_view_time = self._get_total_view_time(total_view_time)
         return _UserBookProgressStat(chapter_unit.title,
+                                     complete_content_count,
                                      content_count,
                                      content_data_count,
                                      total_view_time,
@@ -115,7 +139,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
     def __call__(self):
         self._check_access()
         options = self.options
-        options['user_info'] = self.build_user_info(self.user)
+        options['user'] = self.build_user_info(self.user)
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
         try:
