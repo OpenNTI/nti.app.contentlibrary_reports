@@ -8,6 +8,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import math
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -40,6 +42,19 @@ class ContentUnitMetrics(object):
         total_words = self.get_total_word_with_block_element_detail_count(ntiid)
         minutes = float(total_words) / float(WPM)
         return minutes
+
+    def get_minutes_nblocks(self, ntiid):
+        minutes = self.get_total_minutes(ntiid)
+        nblocks = minutes / BLOCK_PER_MIN
+        return nblocks
+
+    def get_normalize_estimated_time_in_minutes(self, ntiid):
+        nblocks = self.get_minutes_nblocks(ntiid)
+        minutes = math.ceil(nblocks) * BLOCK_PER_MIN
+        return minutes
+
+    def get_normalize_estimated_time_in_hours(self, ntiid):
+        return self.get_normalize_estimated_time_in_minutes / 60
 
     def get_total_hours(self, ntiid):
         return self.get_total_minutes(ntiid) / 60

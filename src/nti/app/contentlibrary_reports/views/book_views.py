@@ -65,7 +65,7 @@ class BookProgressReportPdf(AbstractBookReportView):
     def _get_book_estimated_access_time(self):
         ntiid = self.book.ContentPackages[0].ntiid
         metrics = ContentUnitMetrics(self.context)
-        total_minutes = metrics.get_total_minutes(ntiid)
+        total_minutes = metrics.get_normalize_estimated_time_in_minutes(ntiid)
         return total_minutes
 
     def __call__(self):
