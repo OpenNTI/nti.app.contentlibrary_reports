@@ -46,3 +46,10 @@ class AbstractBookReportView(AbstractReportView):
         title = self.report_title
         book_name = self.book_name()
         return "%s %s %s %s" % (title, book_name, date, self.timezone_info_str)
+
+    def readInput(self, value=None):
+        if self.request.body:
+            values = super(AbstractBookReportView, self).readInput(value)
+        else:
+            values = dict(self.request.params)
+        return values
