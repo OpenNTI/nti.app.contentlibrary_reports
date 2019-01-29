@@ -18,11 +18,6 @@ from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
 logger = __import__('logging').getLogger(__name__)
 
 
-FIGURE_COUNT = 1
-TABLE_COUNT = 1
-NON_FIGURE_IMAGE_COUNT = 1
-
-
 @interface.implementer(IContentUnitMetrics)
 class ContentUnitMetrics(object):
     def __init__(self, context):
@@ -38,6 +33,9 @@ class ContentUnitMetrics(object):
 class ContentConsumptionTime(object):
     WPM = 200
     BLOCK_PER_MIN = 15
+    FIGURE_COUNT = 1
+    TABLE_COUNT = 1
+    NON_FIGURE_IMAGE_COUNT = 1
 
     def __init__(self, metrics, tparams):
         self.content_metrics = metrics
@@ -50,6 +48,21 @@ class ContentConsumptionTime(object):
             self.block_per_min = tparams['block_per_min']
         else:
             self.block_per_min = self.BLOCK_PER_MIN
+
+        if 'figure_n_word' in tparams.keys():
+            self.figure_n_word = tparams['figure_n_word']
+        else:
+            self.figure_n_word = self.FIGURE_COUNT
+
+        if 'table_n_word' in tparams.keys():
+            self.table_n_word = tparams['table_n_word']
+        else:
+            self.table_n_word = self.TABLE_COUNT
+
+        if 'image_n_word' in tparams.keys():
+            self.image_n_word = tparams['image_n_word']
+        else:
+            self.image_n_word = self.NON_FIGURE_IMAGE_COUNT
 
     def get_total_word_count(self, ntiid):
         return self.content_metrics[ntiid]['total_word_count']
@@ -86,11 +99,11 @@ class ContentConsumptionTime(object):
         detail_dict = {}
 
         fig_count = el["BlockElementDetails"]['figure']['count']
-        detail_dict['figure_count_word'] = fig_count * FIGURE_COUNT
+        detail_dict['figure_count_word'] = fig_count * self.figure_n_word
 
         table_count = el["BlockElementDetails"]['table']['count']
-        detail_dict['table_count_word'] = table_count * TABLE_COUNT
+        detail_dict['table_count_word'] = table_count * self.table_n_word
 
         image_count = el["non_figure_image_count"]
-        detail_dict["non_figure_image_word_count"] = image_count * NON_FIGURE_IMAGE_COUNT
+        detail_dict["non_figure_image_word_count"] = image_count * self.image_n_word
         return detail_dict
