@@ -10,6 +10,11 @@ from __future__ import absolute_import
 
 import math
 
+from zope import component
+from zope import interface
+
+from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -17,16 +22,34 @@ FIGURE_COUNT = 1
 TABLE_COUNT = 1
 NON_FIGURE_IMAGE_COUNT = 1
 
-WPM = 200
-BLOCK_PER_MIN = 15
 
-
+@interface.implementer(IContentUnitMetrics)
 class ContentUnitMetrics(object):
     def __init__(self, context):
         self.context = context
+
+    def process(self):
         fs_root = self.context.ContentPackages[0]
         sibling = fs_root.make_sibling_key('content_metrics.json')
-        self.content_metrics = sibling.readContentsAsJson()
+        content_metrics = sibling.readContentsAsJson()
+        return content_metrics
+
+
+class ContentConsumptionTime(object):
+    WPM = 200
+    BLOCK_PER_MIN = 15
+
+    def __init__(self, metrics, tparams):
+        self.content_metrics = metrics
+        if 'wpm' in tparams.keys():
+            self.wpm = int(tparams['wpm'])
+        else:
+            self.wpm = self.WPM
+
+        if 'block_per_min' in tparams.keys():
+            self.block_per_min = tparams['block_per_min']
+        else:
+            self.block_per_min = self.BLOCK_PER_MIN
 
     def get_total_word_count(self, ntiid):
         return self.content_metrics[ntiid]['total_word_count']
@@ -40,17 +63,17 @@ class ContentUnitMetrics(object):
 
     def get_total_minutes(self, ntiid):
         total_words = self.get_total_word_with_block_element_detail_count(ntiid)
-        minutes = float(total_words) / float(WPM)
+        minutes = float(total_words) / float(self.wpm)
         return minutes
 
     def get_minutes_nblocks(self, ntiid):
         minutes = self.get_total_minutes(ntiid)
-        nblocks = minutes / BLOCK_PER_MIN
+        nblocks = minutes / self.block_per_min
         return nblocks
 
     def get_normalize_estimated_time_in_minutes(self, ntiid):
         nblocks = self.get_minutes_nblocks(ntiid)
-        minutes = math.ceil(nblocks) * BLOCK_PER_MIN
+        minutes = math.ceil(nblocks) * self.block_per_min
         return minutes
 
     def get_normalize_estimated_time_in_hours(self, ntiid):

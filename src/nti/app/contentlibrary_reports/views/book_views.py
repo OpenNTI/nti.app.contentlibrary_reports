@@ -22,6 +22,10 @@ from nti.app.contentlibrary_reports import VIEW_BOOK_PROGRESS_REPORT
 
 from nti.app.contentlibrary_reports.views.view_mixins import AbstractBookReportView
 
+from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
+
+from nti.app.contentlibrary_reports.content_metrics import ContentConsumptionTime
+
 from nti.app.contentlibrary_reports.content_metrics import ContentUnitMetrics
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
@@ -62,17 +66,22 @@ class BookProgressReportPdf(AbstractBookReportView):
             result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
         return str(result)
 
-    def _get_book_estimated_access_time(self):
+    def _get_book_estimated_access_time(self, values):
         ntiid = self.book.ContentPackages[0].ntiid
-        metrics = ContentUnitMetrics(self.context)
-        total_minutes = metrics.get_normalize_estimated_time_in_minutes(ntiid)
-        return total_minutes
+        cumetrics = ContentUnitMetrics(self.context)
+        metrics = cumetrics.process()
+        if metrics[ntiid]['expected_consumption_time'] is None:
+            ctime = ContentConsumptionTime(metrics, values)
+            return ctime.get_normalize_estimated_time_in_minutes(ntiid)
+        else:
+            return metrics[ntiid]['expected_consumption_time']
 
     def __call__(self):
         self._check_access()
+        values = self.readInput()
         options = self.options
         book_stats = IResourceUsageStats(self.book, None)
-        estimated_access_time = self._get_book_estimated_access_time()
+        estimated_access_time = self._get_book_estimated_access_time(values)
         if book_stats is not None:
             usernames = book_stats.get_usernames_with_stats()
             user_infos = list()
