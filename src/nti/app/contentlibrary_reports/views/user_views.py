@@ -29,6 +29,10 @@ from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ISiteAdminUtility
 
+from nti.app.contentlibrary_reports.content_metrics import ContentConsumptionTime
+
+from nti.app.contentlibrary_reports.content_metrics import ContentUnitMetrics
+
 logger = __import__('logging').getLogger(__name__)
 
 
@@ -40,7 +44,9 @@ _UserBookProgressStat = \
                 'content_data_count',
                 'total_view_time',
                 'last_accessed',
-                'last_view_time_date'))
+                'last_view_time_date',
+                'expected_consumption_time'))
+
 
 @view_config(context=IUserBundleRecord,
              name=VIEW_USER_BOOK_PROGRESS_REPORT)
@@ -104,7 +110,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             result += self._get_children_view_time(child_unit, stat_map)
         return result
 
-    def _get_chapter_stats(self, chapter_unit, stat_map):
+    def _get_chapter_stats(self, chapter_unit, stat_map, cmtime=None):
         total_view_time = 0
         last_view_time = None
         content_count = 0
@@ -131,33 +137,51 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         last_view_time_date = last_view_time
         last_view_time = self._get_display_last_view_time(last_view_time)
         total_view_time = self._get_total_view_time(total_view_time)
+
+        expected_consumption_time = u'_'
+        if cmtime:
+            expected_consumption_time = self._get_expected_consumption_time(cmtime, chapter_unit.ntiid)
+
         return _UserBookProgressStat(chapter_unit.title,
                                      complete_content_count,
                                      content_count,
                                      content_data_count,
                                      total_view_time,
                                      last_view_time,
-                                     last_view_time_date)
+                                     last_view_time_date,
+                                     expected_consumption_time)
+
+    def _get_expected_consumption_time(cmtime, ntiid):
+        expected_consumption_time = cmtime.content_metrics[ntiid]['expected_consumption_time']
+        if expected_consumption_time is None:
+            return cmtime.get_normalize_estimated_time_in_hours(ntiid)
+        elif expected_consumption_time == 0:
+            expected_consumption_time = u'_'
+        return expected_consumption_time
 
     def __call__(self):
         self._check_access()
+        values = self.readInput()
         options = self.options
         options['user'] = self.build_user_info(self.user)
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
+        cmetrics = ContentUnitMetrics(self.context)
+        metrics = cmetrics.process()
+        cmtime = ContentConsumptionTime(metrics, values)
         try:
             # XXX: First package
             package = self.book.ContentPackages[0]
         except IndexError:
             package = None
         if book_stats is not None and package is not None:
-            stat_map = {x.ntiid:x for x in book_stats.get_stats()}
+            stat_map = {x.ntiid: x for x in book_stats.get_stats()}
             chapter_data = list()
             aggregate_complete_count = 0
             aggregate_content_unit_count = 0
             last_accessed = None
             for content_unit in package.children or ():
-                chapter_progress_stat = self._get_chapter_stats(content_unit, stat_map)
+                chapter_progress_stat = self._get_chapter_stats(content_unit, stat_map, cmtime)
                 chapter_data.append(chapter_progress_stat)
                 aggregate_complete_count += chapter_progress_stat.complete_content_count
                 aggregate_content_unit_count += chapter_progress_stat.content_unit_count

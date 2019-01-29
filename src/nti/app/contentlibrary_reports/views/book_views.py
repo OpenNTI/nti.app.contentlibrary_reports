@@ -38,7 +38,7 @@ logger = __import__('logging').getLogger(__name__)
 
 _UserBookProgressStat = \
     namedtuple('UserBookProgressStat',
-               ('userinfo', 'total_view_time', 'last_accessed'))
+               ('userinfo', 'total_view_time', 'last_accessed', 'expected_consumption_time'))
 
 
 @view_config(context=IContentPackageBundle,
@@ -102,7 +102,8 @@ class BookProgressReportPdf(AbstractBookReportView):
                 total_view_over_estimated_time = u'{}/{}'.format(total_view_time, estimated_access_time)
                 user_result = _UserBookProgressStat(user_info,
                                                     total_view_over_estimated_time,
-                                                    last_view_time)
+                                                    last_view_time,
+                                                    estimated_access_time)
                 user_data.append(user_result)
             options['user_data'] = user_data
         return options
