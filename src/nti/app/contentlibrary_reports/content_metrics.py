@@ -20,11 +20,8 @@ logger = __import__('logging').getLogger(__name__)
 
 @interface.implementer(IContentUnitMetrics)
 class ContentUnitMetrics(object):
-    def __init__(self, context):
-        self.context = context
-
-    def process(self):
-        fs_root = self.context.ContentPackages[0]
+    def process(self, context):
+        fs_root = context.ContentPackages[0]
         sibling = fs_root.make_sibling_key('content_metrics.json')
         content_metrics = sibling.readContentsAsJson()
         return content_metrics

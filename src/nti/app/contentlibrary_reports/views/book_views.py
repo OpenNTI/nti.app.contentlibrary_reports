@@ -12,6 +12,8 @@ from collections import namedtuple
 
 from math import floor
 
+from zope import component
+
 from pyramid.view import view_config
 
 from nti.app.contentlibrary.interfaces import IResourceUsageStats
@@ -68,8 +70,8 @@ class BookProgressReportPdf(AbstractBookReportView):
 
     def _get_book_estimated_access_time(self, values):
         ntiid = self.book.ContentPackages[0].ntiid
-        cumetrics = ContentUnitMetrics(self.context)
-        metrics = cumetrics.process()
+        cumetrics = component.getUtility(IContentUnitMetrics)
+        metrics = cumetrics.process(self.context)
         if metrics[ntiid]['expected_consumption_time'] is None:
             ctime = ContentConsumptionTime(metrics, values)
             return ctime.get_normalize_estimated_time_in_minutes(ntiid)
