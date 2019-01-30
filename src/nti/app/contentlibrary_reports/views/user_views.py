@@ -31,7 +31,7 @@ from nti.dataserver.interfaces import ISiteAdminUtility
 
 from nti.app.contentlibrary_reports.content_metrics import ContentConsumptionTime
 
-from nti.app.contentlibrary_reports.content_metrics import ContentUnitMetrics
+from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -151,7 +151,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                                      last_view_time_date,
                                      expected_consumption_time)
 
-    def _get_expected_consumption_time(cmtime, ntiid):
+    def _get_expected_consumption_time(self, cmtime, ntiid):
         expected_consumption_time = cmtime.content_metrics[ntiid]['expected_consumption_time']
         if expected_consumption_time is None:
             return cmtime.get_normalize_estimated_time_in_hours(ntiid)
@@ -166,7 +166,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         options['user'] = self.build_user_info(self.user)
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
-        cmetrics = ContentUnitMetrics(self.context)
+        cmetrics = component.getUtility(IContentUnitMetrics)
         metrics = cmetrics.process()
         cmtime = ContentConsumptionTime(metrics, values)
         try:

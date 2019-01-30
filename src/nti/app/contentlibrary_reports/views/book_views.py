@@ -28,8 +28,6 @@ from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
 
 from nti.app.contentlibrary_reports.content_metrics import ContentConsumptionTime
 
-from nti.app.contentlibrary_reports.content_metrics import ContentUnitMetrics
-
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
 from nti.dataserver.users import User

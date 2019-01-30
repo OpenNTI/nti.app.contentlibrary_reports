@@ -84,7 +84,7 @@ class ContentConsumptionTime(object):
     def get_normalize_estimated_time_in_minutes(self, ntiid):
         nblocks = self.get_minutes_nblocks(ntiid)
         minutes = math.ceil(nblocks) * self.minute_block
-        return minutes
+        return int(minutes)
 
     def get_normalize_estimated_time_in_hours(self, ntiid):
         return self.get_normalize_estimated_time_in_minutes(ntiid) / 60
