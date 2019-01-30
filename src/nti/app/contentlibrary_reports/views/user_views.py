@@ -167,7 +167,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
         cmetrics = component.getUtility(IContentUnitMetrics)
-        metrics = cmetrics.process()
+        metrics = cmetrics.process(self.book)
         cmtime = ContentConsumptionTime(metrics, values)
         try:
             # XXX: First package
