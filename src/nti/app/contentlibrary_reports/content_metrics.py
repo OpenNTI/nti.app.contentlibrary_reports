@@ -29,7 +29,7 @@ class ContentUnitMetrics(object):
 
 class ContentConsumptionTime(object):
     WPM = 200
-    BLOCK_PER_MIN = 15
+    MINUTE_BLOCK = 15
     FIGURE_COUNT = 1
     TABLE_COUNT = 1
     NON_FIGURE_IMAGE_COUNT = 1
@@ -41,10 +41,10 @@ class ContentConsumptionTime(object):
         else:
             self.wpm = self.WPM
 
-        if 'block_per_min' in tparams.keys():
-            self.block_per_min = tparams['block_per_min']
+        if 'minute_block' in tparams.keys():
+            self.minute_block = tparams['minute_block']
         else:
-            self.block_per_min = self.BLOCK_PER_MIN
+            self.minute_block = self.MINUTE_BLOCK
 
         if 'figure_n_word' in tparams.keys():
             self.figure_n_word = tparams['figure_n_word']
@@ -78,12 +78,12 @@ class ContentConsumptionTime(object):
 
     def get_minutes_nblocks(self, ntiid):
         minutes = self.get_total_minutes(ntiid)
-        nblocks = minutes / self.block_per_min
+        nblocks = minutes / self.minute_block
         return nblocks
 
     def get_normalize_estimated_time_in_minutes(self, ntiid):
         nblocks = self.get_minutes_nblocks(ntiid)
-        minutes = math.ceil(nblocks) * self.block_per_min
+        minutes = math.ceil(nblocks) * self.minute_block
         return minutes
 
     def get_normalize_estimated_time_in_hours(self, ntiid):
