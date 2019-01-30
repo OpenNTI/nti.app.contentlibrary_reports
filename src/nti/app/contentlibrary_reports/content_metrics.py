@@ -87,7 +87,7 @@ class ContentConsumptionTime(object):
         return minutes
 
     def get_normalize_estimated_time_in_hours(self, ntiid):
-        return self.get_normalize_estimated_time_in_minutes / 60
+        return self.get_normalize_estimated_time_in_minutes(ntiid) / 60
 
     def get_total_hours(self, ntiid):
         return self.get_total_minutes(ntiid) / 60
