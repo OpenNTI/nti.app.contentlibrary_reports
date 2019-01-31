@@ -24,13 +24,13 @@
         <tr>
             <td><para style="header">Title</para></td>
             <td><para style="header">Topics</para></td>
-            <td><para style="header">Progress</para></td>
+            <td><para style="header">Progress (hour)</para></td>
             <td><para style="header_r">Last Accessed</para></td>
         </tr>
         <tr tal:repeat="item options/chapter_data">
             <td><para style="data" tal:content="item/title">Title</para></td>
             <td align="left"><tal:block tal:content="item/complete_content_count">completed</tal:block> of <tal:block tal:content="item/content_unit_count">completed</tal:block></td>
-            <td align="left"><tal:block tal:content="item/complete_content_count">completed</tal:block> / <tal:block tal:content="item/expected_consumption_time">completed</tal:block> Hours</td>
+            <td align="left"><tal:block tal:content="item/complete_content_count">completed</tal:block> / <tal:block tal:content="item/expected_consumption_time">completed</tal:block></td>
             <td align="right" tal:content="item/last_accessed | default">Last Seen</td>
         </tr>
     </blockTable>
