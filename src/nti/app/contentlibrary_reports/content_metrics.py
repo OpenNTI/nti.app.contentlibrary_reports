@@ -36,27 +36,27 @@ class ContentConsumptionTime(object):
 
     def __init__(self, metrics, tparams):
         self.content_metrics = metrics
-        if 'wpm' in tparams.keys():
+        if 'wpm' in tparams:
             self.wpm = int(tparams['wpm'])
         else:
             self.wpm = self.WPM
 
-        if 'minute_block' in tparams.keys():
+        if 'minute_block' in tparams:
             self.minute_block = tparams['minute_block']
         else:
             self.minute_block = self.MINUTE_BLOCK
 
-        if 'figure_n_word' in tparams.keys():
+        if 'figure_n_word' in tparams:
             self.figure_n_word = tparams['figure_n_word']
         else:
             self.figure_n_word = self.FIGURE_COUNT
 
-        if 'table_n_word' in tparams.keys():
+        if 'table_n_word' in tparams:
             self.table_n_word = tparams['table_n_word']
         else:
             self.table_n_word = self.TABLE_COUNT
 
-        if 'image_n_word' in tparams.keys():
+        if 'image_n_word' in tparams:
             self.image_n_word = tparams['image_n_word']
         else:
             self.image_n_word = self.NON_FIGURE_IMAGE_COUNT
