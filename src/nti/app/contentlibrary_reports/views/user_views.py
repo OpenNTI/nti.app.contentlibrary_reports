@@ -168,7 +168,11 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         Return the expected consumption time, in minutes for
         the given ntiid.
         """
-        return cmtime.get_normalize_estimated_time_in_minutes(ntiid)
+        expected_consumption_time = cmtime.content_metrics[ntiid].get('expected_consumption_time')
+        if expected_consumption_time is None:
+            # No override
+            expected_consumption_time = cmtime.get_normalize_estimated_time_in_minutes(ntiid)
+        return expected_consumption_time
 
     def __call__(self):
         self._check_access()

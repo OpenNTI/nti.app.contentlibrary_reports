@@ -74,11 +74,12 @@ class BookProgressReportPdf(AbstractBookReportView):
         ntiid = self.book.ContentPackages[0].ntiid
         cumetrics = component.getUtility(IContentUnitMetrics)
         metrics = cumetrics.process(self.context)
-        if metrics[ntiid]['expected_consumption_time'] is None:
+        expected_consumption_time = metrics[ntiid].get('expected_consumption_time')
+        if expected_consumption_time is None:
+            # No override, gather our metric.
             ctime = ContentConsumptionTime(metrics, values)
-            return ctime.get_normalize_estimated_time_in_minutes(ntiid)
-        else:
-            return metrics[ntiid]['expected_consumption_time']
+            expected_consumption_time = ctime.get_normalize_estimated_time_in_minutes(ntiid)
+        return expected_consumption_time
 
     def __call__(self):
         self._check_access()
