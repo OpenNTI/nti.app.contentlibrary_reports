@@ -45,7 +45,8 @@ _UserBookProgressStat = \
                 'total_view_time',
                 'last_accessed',
                 'last_view_time_date',
-                'is_complete'))
+                'is_complete',
+                'has_expected_consumption'))
 
 
 @view_config(context=IUserBundleRecord,
@@ -111,35 +112,46 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         """
         Gather a stat for the given chapter (content_unit). We will return analysis
         on whether the user spent enough time (is_complete) on the underlying sections
-        for our given chapter.
+        for our given chapter. These map to the `Hours` earned/possible on each chapter.
+
+        In display, each chapter refers to `Hours` as credit hours.
         """
         total_view_time = 0
         last_view_time = None
         content_count = 0
         content_data_count = 0
         complete_content_count = 0
-        for content_unit in chapter_unit.children or ():
-            content_count += 1
-            section_view_time = 0
-            content_stats = stat_map.get(content_unit.ntiid)
-            section_view_time += getattr(content_stats, 'total_view_time', 0)
-            section_view_time += self._get_children_view_time(content_unit, stat_map)
-            if section_view_time:
-                content_data_count += 1
-                if section_view_time > self._get_expected_consumption_time(cmtime, content_unit.ntiid):
-                    complete_content_count += 1
-                total_view_time += section_view_time
-                section_last_view_time = getattr(content_stats, 'last_view_time')
-                if section_last_view_time:
-                    if last_view_time is None:
-                        last_view_time = section_last_view_time
-                    else:
-                        last_view_time = max(last_view_time,
-                                             section_last_view_time)
+
+        # If this is 0, that means this chapter is not necessary for a user
+        # completing the bundle material. The underling content counts will
+        # not count towards the aggregate of the book. This means we will
+        # not return access time for these chapters.
+        chapter_consumption_time = self._get_expected_consumption_time(cmtime, chapter_unit.ntiid)
+
+        if chapter_consumption_time:
+            for content_unit in chapter_unit.children or ():
+                content_count += 1
+                section_view_time = 0
+                content_stats = stat_map.get(content_unit.ntiid)
+                section_view_time += getattr(content_stats, 'total_view_time', 0)
+                section_view_time += self._get_children_view_time(content_unit, stat_map)
+                if section_view_time:
+                    content_data_count += 1
+                    if section_view_time > self._get_expected_consumption_time(cmtime, content_unit.ntiid):
+                        complete_content_count += 1
+                    total_view_time += section_view_time
+                    section_last_view_time = getattr(content_stats, 'last_view_time')
+                    if section_last_view_time:
+                        if last_view_time is None:
+                            last_view_time = section_last_view_time
+                        else:
+                            last_view_time = max(last_view_time,
+                                                 section_last_view_time)
         last_view_time_date = last_view_time
         last_view_time = self._get_display_last_view_time(last_view_time)
         total_view_time = self._get_total_view_time(total_view_time)
         is_complete = complete_content_count >= content_count
+        has_expected_consumption = bool(chapter_consumption_time)
 
         return _UserBookProgressStat(chapter_unit.title,
                                      complete_content_count,
@@ -148,7 +160,8 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                                      total_view_time,
                                      last_view_time,
                                      last_view_time_date,
-                                     is_complete)
+                                     is_complete,
+                                     has_expected_consumption)
 
     def _get_expected_consumption_time(self, cmtime, ntiid):
         return cmtime.get_normalize_estimated_time_in_minutes(ntiid)

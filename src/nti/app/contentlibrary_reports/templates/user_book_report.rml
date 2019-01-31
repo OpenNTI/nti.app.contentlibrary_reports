@@ -29,10 +29,14 @@
         </tr>
         <tr tal:repeat="item options/chapter_data">
             <td><para style="data" tal:content="item/title">Title</para></td>
-            <td align="left"
+            <td tal:condition="options/has_expected_consumption"
+                align="left"
                 tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'"><tal:block tal:content="item/complete_content_count">completed</tal:block> of <tal:block tal:content="item/content_unit_count">completed</tal:block></td>
-            <td align="left"
+            <td tal:condition="not:options/has_expected_consumption" align="left">-</td>
+            <td tal:condition="options/has_expected_consumption"
+                align="left"
                 tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'"><tal:block tal:content="item/complete_content_count">completed</tal:block> / <tal:block tal:content="item/content_unit_count">completed</tal:block> Hours</td>
+            <td tal:condition="not:options/has_expected_consumption" align="left">-</td>
             <td align="right" tal:content="item/last_accessed | default">Last Seen</td>
         </tr>
     </blockTable>
