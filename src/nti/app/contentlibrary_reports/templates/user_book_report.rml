@@ -31,15 +31,14 @@
             <td><para style="data" tal:content="item/title">Title</para></td>
             <td tal:condition="item/has_expected_consumption"
                 align="left"
-                style="data"
-                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'"><tal:block tal:content="item/complete_content_count">completed</tal:block> of <tal:block tal:content="item/content_unit_count">completed</tal:block></td>
-            <td tal:condition="not:item/has_expected_consumption" style="data" align="left">-</td>
+                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'"><tal:block tal:content="item/complete_content_count">completed</tal:block> of <tal:block tal:content="item/content_unit_count">completed</tal:block></td>
+            <td tal:condition="not:item/has_expected_consumption" align="left">-</td>
             <td tal:condition="item/has_expected_consumption"
                 align="left"
                 style="data"
-                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'"><tal:block tal:content="item/total_view_time">view time</tal:block> / <tal:block tal:content="item/chapter_consumption_time">expected_time</tal:block></td>
-            <td tal:condition="not:item/has_expected_consumption" align="left" style="data">-</td>
-            <td align="right" tal:content="item/last_accessed | default" style="data">Last Seen</td>
+                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'"><tal:block tal:content="item/total_view_time">view time</tal:block> / <tal:block tal:content="item/chapter_consumption_time">expected_time</tal:block></td>
+            <td tal:condition="not:item/has_expected_consumption" align="left">-</td>
+            <td align="right" tal:content="item/last_accessed | default">Last Seen</td>
         </tr>
     </blockTable>
 </metal:block>

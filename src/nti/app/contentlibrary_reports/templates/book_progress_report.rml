@@ -26,11 +26,10 @@
 			<td><para style="data" tal:content="item/userinfo/username">Username</para></td>
 			<td><para style="data" tal:content="item/userinfo/email">Email</para></td>
 			<td align="left"
-			    style="data"
-			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'">
+			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'">
 			    <tal:block tal:content="item/total_view_time">view_time</tal:block> / <tal:block tal:content="options/estimated_consumption_time">expected_time</tal:block></td>
-			<td align="right" style="data" tal:content="item/last_accessed | default"
-			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#000000'">Last Seen</td>
+			<td align="right" tal:content="item/last_accessed | default"
+			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'">Last Seen</td>
 		</tr>
 	</blockTable>
 
