@@ -11,7 +11,7 @@
 	</para>
 
 	<blockTable style='default'
-				colWidths="20% 17% 28% 17% 18%"
+				colWidths="20% 16% 28% 16% 20%"
 				tal:condition="options/user_data"
 				repeatRows="1">
 		<tr>
