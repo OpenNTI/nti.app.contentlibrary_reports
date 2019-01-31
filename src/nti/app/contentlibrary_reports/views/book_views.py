@@ -67,6 +67,10 @@ class BookProgressReportPdf(AbstractBookReportView):
         return result
 
     def _get_book_estimated_access_time(self, values):
+        """
+        Return the expected consumption time, in minutes for
+        the given ntiid.
+        """
         ntiid = self.book.ContentPackages[0].ntiid
         cumetrics = component.getUtility(IContentUnitMetrics)
         metrics = cumetrics.process(self.context)

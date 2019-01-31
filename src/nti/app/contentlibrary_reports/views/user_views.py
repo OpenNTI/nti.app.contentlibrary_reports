@@ -164,6 +164,10 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                                      has_expected_consumption)
 
     def _get_expected_consumption_time(self, cmtime, ntiid):
+        """
+        Return the expected consumption time, in minutes for
+        the given ntiid.
+        """
         return cmtime.get_normalize_estimated_time_in_minutes(ntiid)
 
     def __call__(self):
