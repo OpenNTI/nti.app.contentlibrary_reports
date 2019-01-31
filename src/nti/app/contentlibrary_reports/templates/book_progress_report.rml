@@ -28,7 +28,8 @@
 			<td><para style="data" tal:content="item/userinfo/email">Email</para></td>
 			<td align="left" tal:content="item/total_view_time | default"
 			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#e74c3c'">Total View Time</td>
-			<td align="right" tal:content="item/last_accessed | default">Last Seen</td>
+			<td align="right" tal:content="item/last_accessed | default"
+			    tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#e74c3c'">Last Seen</td>
 		</tr>
 	</blockTable>
 
