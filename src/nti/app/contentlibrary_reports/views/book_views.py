@@ -99,9 +99,8 @@ class BookProgressReportPdf(AbstractBookReportView):
                 # the material and who do not end up in this report (our user
                 # population is driven from view stats). Should we exclude
                 # these users too?
-                total_view_over_estimated_time = u'{}/{}'.format(total_view_time, estimated_access_time)
                 user_result = _UserBookProgressStat(user_info,
-                                                    total_view_over_estimated_time,
+                                                    total_view_time,
                                                     last_view_time,
                                                     estimated_access_time)
                 user_data.append(user_result)

@@ -24,7 +24,7 @@
         <tr>
             <td><para style="header">Title</para></td>
             <td><para style="header">Topics</para></td>
-            <td><para style="header">Progress (Hours)</para></td>
+            <td><para style="header">Progress (hour)</para></td>
             <td><para style="header_r">Last Accessed</para></td>
         </tr>
         <tr tal:repeat="item options/chapter_data">

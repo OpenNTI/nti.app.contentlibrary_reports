@@ -25,7 +25,7 @@
 			<td><para style="data" tal:content="item/userinfo/display">Name</para></td>
 			<td><para style="data" tal:content="item/userinfo/username">Username</para></td>
 			<td><para style="data" tal:content="item/userinfo/email">Email</para></td>
-			<td align="left" tal:content="item/total_view_time | default">Total View Time</td>
+			<td align="left"><tal:block tal:content="item/total_view_time">completed</tal:block> / <tal:block tal:content="item/expected_consumption_time">completed</tal:block></td>
 			<td align="right" tal:content="item/last_accessed | default">Last Seen</td>
 		</tr>
 	</blockTable>
