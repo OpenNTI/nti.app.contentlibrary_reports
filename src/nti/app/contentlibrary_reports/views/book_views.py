@@ -38,7 +38,7 @@ logger = __import__('logging').getLogger(__name__)
 
 _UserBookProgressStat = \
     namedtuple('UserBookProgressStat',
-               ('userinfo', 'total_view_time', 'last_accessed', 'expected_consumption_time'))
+               ('userinfo', 'total_view_time', 'last_accessed', 'is_complete'))
 
 
 @view_config(context=IContentPackageBundle,
@@ -81,7 +81,7 @@ class BookProgressReportPdf(AbstractBookReportView):
         values = self.readInput()
         options = self.options
         book_stats = IResourceUsageStats(self.book, None)
-        estimated_access_time = self._get_book_estimated_access_time(values)
+        estimated_consumption_time = self._get_book_estimated_access_time(values)
         if book_stats is not None:
             usernames = book_stats.get_usernames_with_stats()
             user_infos = list()
@@ -99,11 +99,14 @@ class BookProgressReportPdf(AbstractBookReportView):
                 # the material and who do not end up in this report (our user
                 # population is driven from view stats). Should we exclude
                 # these users too?
-                total_view_over_estimated_time = u'{}/{}'.format(total_view_time, estimated_access_time)
+                is_complete = total_view_time \
+                          and estimated_consumption_time \
+                          and total_view_time >= estimated_consumption_time
                 user_result = _UserBookProgressStat(user_info,
-                                                    total_view_over_estimated_time,
+                                                    total_view_time,
                                                     last_view_time,
-                                                    estimated_access_time)
+                                                    is_complete)
                 user_data.append(user_result)
             options['user_data'] = user_data
+            options['estimated_consumption_time'] = estimated_consumption_time
         return options
