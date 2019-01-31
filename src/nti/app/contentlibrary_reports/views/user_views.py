@@ -45,7 +45,7 @@ _UserBookProgressStat = \
                 'total_view_time',
                 'last_accessed',
                 'last_view_time_date',
-                'expected_consumption_time'))
+                'is_complete'))
 
 
 @view_config(context=IUserBundleRecord,
@@ -61,9 +61,6 @@ class UserBookProgressReportPdf(AbstractBookReportView):
 
     #: 15 minute floor; this will probably need to be site driven
     VIEW_TIME_MINUTE_FLOOR = 15
-
-    #: Each unit must be viewed 15 minutes to be considered complete
-    VIEW_CONTENT_UNIT_COMPLETE_SECONDS = 15 * 60
 
     def _can_admin_user(self, user):
         # Verify a site admin is administering a user in their site.
@@ -100,7 +97,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
 
     def _get_children_view_time(self, parent_unit, stat_map):
         """
-        Get the total view time for our given unit's children, recursively
+        Get the total view time (in minutes) for our given unit's children, recursively.
         """
         result = 0
         for child_unit in parent_unit.children or ():
@@ -110,7 +107,12 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             result += self._get_children_view_time(child_unit, stat_map)
         return result
 
-    def _get_chapter_stats(self, chapter_unit, stat_map, cmtime=None):
+    def _get_chapter_stats(self, chapter_unit, stat_map, cmtime):
+        """
+        Gather a stat for the given chapter (content_unit). We will return analysis
+        on whether the user spent enough time (is_complete) on the underlying sections
+        for our given chapter.
+        """
         total_view_time = 0
         last_view_time = None
         content_count = 0
@@ -124,7 +126,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             section_view_time += self._get_children_view_time(content_unit, stat_map)
             if section_view_time:
                 content_data_count += 1
-                if section_view_time > self.VIEW_CONTENT_UNIT_COMPLETE_SECONDS:
+                if section_view_time > self._get_expected_consumption_time(cmtime, content_unit.ntiid):
                     complete_content_count += 1
                 total_view_time += section_view_time
                 section_last_view_time = getattr(content_stats, 'last_view_time')
@@ -137,10 +139,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         last_view_time_date = last_view_time
         last_view_time = self._get_display_last_view_time(last_view_time)
         total_view_time = self._get_total_view_time(total_view_time)
-
-        expected_consumption_time = u'_'
-        if cmtime:
-            expected_consumption_time = self._get_expected_consumption_time(cmtime, chapter_unit.ntiid)
+        is_complete = complete_content_count >= content_count
 
         return _UserBookProgressStat(chapter_unit.title,
                                      complete_content_count,
@@ -149,15 +148,10 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                                      total_view_time,
                                      last_view_time,
                                      last_view_time_date,
-                                     expected_consumption_time)
+                                     is_complete)
 
     def _get_expected_consumption_time(self, cmtime, ntiid):
-        expected_consumption_time = cmtime.content_metrics[ntiid]['expected_consumption_time']
-        if expected_consumption_time is None:
-            return cmtime.get_normalize_estimated_time_in_hours(ntiid)
-        elif expected_consumption_time == 0:
-            expected_consumption_time = u'_'
-        return expected_consumption_time
+        return cmtime.get_normalize_estimated_time_in_minutes(ntiid)
 
     def __call__(self):
         self._check_access()
