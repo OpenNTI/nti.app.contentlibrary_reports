@@ -46,6 +46,7 @@ _UserBookProgressStat = \
                 'last_accessed',
                 'last_view_time_date',
                 'is_complete',
+                'chapter_consumption_time',
                 'has_expected_consumption'))
 
 
@@ -112,9 +113,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         """
         Gather a stat for the given chapter (content_unit). We will return analysis
         on whether the user spent enough time (is_complete) on the underlying sections
-        for our given chapter. These map to the `Hours` earned/possible on each chapter.
-
-        In display, each chapter refers to `Hours` as credit hours.
+        for our given chapter.
         """
         total_view_time = 0
         last_view_time = None
@@ -161,6 +160,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                                      last_view_time,
                                      last_view_time_date,
                                      is_complete,
+                                     chapter_consumption_time,
                                      has_expected_consumption)
 
     def _get_expected_consumption_time(self, cmtime, ntiid):
