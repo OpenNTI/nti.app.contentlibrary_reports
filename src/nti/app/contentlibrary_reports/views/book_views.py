@@ -58,13 +58,13 @@ class BookProgressReportPdf(AbstractBookReportView):
         return last_view_time
 
     def _get_total_view_time(self, user_stats):
-        result = ''
+        result = 0
         total_view_time = user_stats.total_view_time
         if total_view_time:
             in_minutes = total_view_time / 60
             in_base = floor(in_minutes / self.VIEW_TIME_MINUTE_FLOOR)
             result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
-        return str(result)
+        return result
 
     def _get_book_estimated_access_time(self, values):
         ntiid = self.book.ContentPackages[0].ntiid

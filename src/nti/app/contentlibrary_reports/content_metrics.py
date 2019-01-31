@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 import math
 
-from zope import component
 from zope import interface
 
 from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
