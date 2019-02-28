@@ -50,8 +50,21 @@
         permission="zope.Public"
         manager="nti.app.contenttypes.reports.interfaces.IPDFReportHeaderManager" />
 
+    <!-- Book concept report -->
+    <z3c:template
+        template="templates/book_concept_report.rml"
+        for=".views.book_views.BookConceptReportPdf"
+        layer="pyramid.interfaces.IRequest" />
 
-    <!-- Student participation report -->
+    <browser:viewlet
+        name="book_info_content_provider"
+        template="templates/book_info_content_provider.rml"
+        view=".views.book_views.BookConceptReportPdf"
+        layer="pyramid.interfaces.IRequest"
+        permission="zope.Public"
+        manager="nti.app.contenttypes.reports.interfaces.IPDFReportHeaderManager" />
+
+    <!-- User book report -->
     <z3c:template
         template="templates/user_book_report.rml"
         for=".views.user_views.UserBookProgressReportPdf"
