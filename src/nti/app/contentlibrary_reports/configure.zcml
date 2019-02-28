@@ -30,6 +30,7 @@
 
     <!-- Utility -->
     <utility factory=".content_metrics.ContentUnitMetrics"/>
+    <utility factory=".concepts.Concepts"/>
 
     <!-- Report Registration -->
     <include package="nti.app.contenttypes.reports"/>
