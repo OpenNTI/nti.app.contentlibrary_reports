@@ -26,11 +26,6 @@ class Concepts(object):
         return concepts
 
 
-class ConceptsHierarchyTraversal(object):
-    def __init__(self, concepts):
-        self.concepts = concepts
-
-
 class ConceptsEstimatedReadingTime(object):
     def __init__(self, concept_hierachy, cmtime):
         """
