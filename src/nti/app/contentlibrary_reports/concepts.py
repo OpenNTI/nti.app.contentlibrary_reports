@@ -41,22 +41,22 @@ class ConceptsEstimatedReadingTime(object):
             tree = self.concept_hierachy['concepthierarchy']
             if 'concepts' in tree:
                 concepts = tree['concepts']
-                for item in concepts:
-                    self._traverse_concept_tree(item, concepts[item], concepts_metrics)
+                for concept_ntiid, concept in concepts.items():
+                    self._traverse_concept_tree(concept_ntiid, concept, concepts_metrics)
         return concepts_metrics
 
     def _traverse_concept_tree(self, concept_ntiid, concept, concepts_metrics):
         cmetrics = {}
         cmetrics['name'] = concept['name']
-        self._count_content_unit_metrics(cmetrics, concept['contentunitntiids'])
+        self._count_estimated_reading_time(cmetrics, concept['contentunitntiids'])
         concepts_metrics[concept_ntiid] = cmetrics
         if 'concepts' in concept:
             subconcepts = concept['concepts']
-            for item in subconcepts:
-                self._traverse_concept_tree(item, subconcepts[item], concepts_metrics)
-                self._rollup_estimated_reading_time(concept_ntiid, item, concepts_metrics)
+            for subconcept_ntiid, subconcept in subconcepts.items():
+                self._traverse_concept_tree(subconcept_ntiid, subconcept, concepts_metrics)
+                self._rollup_estimated_reading_time(concept_ntiid, subconcept_ntiid, concepts_metrics)
 
-    def _count_content_unit_metrics(self, cmetric, content_unit_ntiids):
+    def _count_estimated_reading_time(self, cmetric, content_unit_ntiids):
         cmetric['normalized_estimated_reading_time'] = 0
         cmetric['estimated_reading_time'] = 0
         for unit_ntiid in content_unit_ntiids:
