@@ -12,6 +12,8 @@ import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory(__name__)
 
 
+VIEW_BOOK_CONCEPT_REPORT = 'BookConceptReport'
+
 VIEW_BOOK_PROGRESS_REPORT = 'BookProgressReport'
 
 VIEW_USER_BOOK_PROGRESS_REPORT = 'UserBookProgressReport'
