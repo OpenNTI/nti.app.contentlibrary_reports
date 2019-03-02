@@ -1,0 +1,35 @@
+<metal:block
+    xmlns:tal="http://xml.zope.org/namespaces/tal"
+    xmlns:metal="http://xml.zope.org/namespaces/metal"
+    tal:define="options view/options">
+
+    <para style="normal" spaceAfter=".1in" tal:condition="not:options/user_data">
+        There is no user data for this book.
+    </para>
+    <para style="normal" spaceAfter=".2in" tal:condition="options/user_data">
+        This report presents an overview of the learner progress on this book.
+    </para>
+
+    <blockTable style='default'
+                colWidths="20% 17% 28% 15% 20%"
+                tal:condition="options/user_data"
+                repeatRows="1">
+        <tr>
+            <td><para style="header">Name</para></td>
+            <td><para style="header">Username</para></td>
+            <td><para style="header">Email</para></td>
+            <td><para style="header">View Time (min)</para></td>
+            <td><para style="header_r">Last Accessed</para></td>
+        </tr>
+        <tr tal:repeat="item options/user_data">
+            <td><para style="data" tal:content="item/userinfo/display">Name</para></td>
+            <td><para style="data" tal:content="item/userinfo/username">Username</para></td>
+            <td><para style="data" tal:content="item/userinfo/email">Email</para></td>
+            <td align="left"
+                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'"><tal:block tal:content="item/total_view_time">view_time</tal:block> / <tal:block tal:content="options/estimated_consumption_time">expected_time</tal:block></td>
+            <td align="right" tal:content="item/last_accessed | default"
+                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'">Last Seen</td>
+        </tr>
+    </blockTable>
+
+</metal:block>
