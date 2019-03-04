@@ -1,0 +1,32 @@
+{
+	"concepthierarchy": {
+		"concepts": {
+			"concepts": {
+				"tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003": {
+					"contentunitntiids": [
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:1",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:2",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:3",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:4",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:5",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:6",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:7",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:8",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:9",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:11",
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:12"
+					],
+					"name": "NFPA 1003",
+					"concepts": {}
+				},
+				"tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002": {
+					"contentunitntiids": [
+						"tag:nextthought.com,2011-10:IFSTA-HTML-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.chapter:10"
+					],
+					"name": "NFPA 1002",
+					"concepts": {}
+				}
+			}
+		}
+	}
+}

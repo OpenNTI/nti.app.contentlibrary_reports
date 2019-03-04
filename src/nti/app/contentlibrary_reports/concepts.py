@@ -46,6 +46,8 @@ class ConceptsEstimatedReadingTime(object):
             tree = self.concept_hierachy['concepthierarchy']
             if 'concepts' in tree:
                 concepts = tree['concepts']
+                if 'name' not in concepts and 'concepts' in concepts:
+                    concepts = concepts['concepts']
                 for concept_ntiid, concept in concepts.items():
                     self._traverse_concept_tree(concept_ntiid, concept, concepts_metrics)
         return concepts_metrics
