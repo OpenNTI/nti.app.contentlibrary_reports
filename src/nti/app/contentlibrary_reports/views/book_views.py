@@ -8,9 +8,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+
 from collections import namedtuple
 
 from math import floor
+
+from copy import deepcopy
 
 from zope import component
 
@@ -122,6 +125,15 @@ class BookProgressReportPdf(AbstractBookReportView):
         return options
 
 
+_UserConceptProgressStat = \
+    namedtuple('UserConceptProgressStat',
+               ('userinfo', 'total_view_time', 'is_complete'))
+
+_ConceptProgressStat = \
+    namedtuple('ConceptProgressStat',
+               ('concept_ntiid', 'concept_name', 'concept_estimated_time', 'user_data'))
+
+
 @view_config(context=IContentPackageBundle,
              name=VIEW_BOOK_CONCEPT_REPORT)
 class BookConceptReportPdf(BookProgressReportPdf):
@@ -147,6 +159,31 @@ class BookConceptReportPdf(BookProgressReportPdf):
         return concepts_metrics
 
     def _get_concept_tree_usage(self, concepts_hierarchy, ntiid_stats_map):
+        """
+        Method to get usage statistic (total_view_time) on each concepts per user.
+        It return concepts_usage dictionary that looks as follow:
+        {
+        'concept_ntiid_1': {
+                'usage' : {...},
+                'name'  : '...'}
+                },
+        'concept_ntiid_2': {
+                'usage' : {...},
+                'name'  : '...'
+                },
+        ...
+        }
+        For example:
+        {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003': {
+            'usages': {u'dortje': 0, u'brownie': 0, u'brownie3': 0},
+            'name': u'NFPA 1003'
+            },
+        u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002': {
+            'usages': {},
+            'name': u'NFPA 1002'
+            }
+        }
+        """
         if 'concepthierarchy' not in concepts_hierarchy:
             return None
         tree = concepts_hierarchy['concepthierarchy']
@@ -176,7 +213,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
         @type  content_unit_ntiids: list
         @param content_unit_ntiids: list of content unit ntiids of a concept
         @type  ntiid_stats_map    : dictionary
-        @param ntiid_stats_map    :
+        @param ntiid_stats_map    : key is content unit ntiid and value is nti.app.analytics.usage_stats.ResourceStats object
         @rtype : dictionary
         @return: total time spent on a concept by user
         """
@@ -185,21 +222,12 @@ class BookConceptReportPdf(BookProgressReportPdf):
             if unit_ntiid in ntiid_stats_map:
                 user_stats = ntiid_stats_map[unit_ntiid].user_stats
                 for s_user in user_stats:
-                    total_view_time = self._get_total_view_time(user_stats)
+                    total_view_time = user_stats[s_user].total_view_time
                     if s_user in user_concept_stats:
                         user_concept_stats[s_user] += total_view_time
                     else:
                         user_concept_stats[s_user] = total_view_time
         return user_concept_stats
-
-    def _get_total_view_time(self, user_stats):
-        result = 0
-        total_view_time = user_stats.total_view_time
-        if total_view_time:
-            in_minutes = total_view_time / 60
-            in_base = floor(in_minutes / self.VIEW_TIME_MINUTE_FLOOR)
-            result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
-        return result
 
     def _aggregate_concept_usage(self, cparent_ntiid, cchild_ntiid, concepts_usage):
         """
@@ -211,19 +239,64 @@ class BookConceptReportPdf(BookProgressReportPdf):
             else:
                 concepts_usage[cparent_ntiid]['usages'][user] += concepts_usage[cchild_ntiid]['usages'][user]
 
+    def _map_all_usernames_to_concepts_usage(self, usernames, concepts_usage):
+        """
+        usernames list consists of all the book's usernames.
+        However the concept['usage'] only list users that already read the particular unit where the concept is refered.
+        We want to include all users in the concept['usage'] for the reporting.
+        """
+        users = set(usernames)
+        for concept in list(concepts_usage.values()):
+            usage = concept['usages']
+            users_in_usage = set(usage.keys())
+            users_not_in_usage = users - users_in_usage
+            users_not_in_usage_dict = {username: 0 for username in users_not_in_usage}
+            usage.update(users_not_in_usage_dict)
+
+    def _check_user_completion_on_a_concept(self, concept, estimated_consumption_time):
+        user_infos = list()
+        usages = concept['usages']
+        for username in usages:
+            user = User.get_user(username)
+            user_infos.append(self.build_user_info(user))
+        user_infos = sorted(user_infos)
+        user_data = list()
+        for user_info in user_infos:
+            total_view_time = usages[user_info.username]
+            is_complete = estimated_consumption_time \
+                and total_view_time >= estimated_consumption_time
+            user_result = _UserConceptProgressStat(user_info,
+                                                   total_view_time,
+                                                   is_complete)
+            user_data.append(user_result)
+        return user_data
+
     def __call__(self):
         self._check_access()
         values = self.readInput()
         options = self.options
         book_stats = IResourceUsageStats(self.book, None)
-        accum = book_stats.accum
-        ntiid_stats_map = accum.ntiid_stats_map
 
         uconcepts = component.getUtility(IConcepts)
         concepts_hierarchy = uconcepts.process(self.context)
         concepts_metrics = self._get_concept_estimated_access_time(values, concepts_hierarchy)
-        if book_stats is not None and concepts_hierarchy:
+
+        if book_stats and concepts_hierarchy:
+            usernames = book_stats.get_usernames_with_stats()
+            accum = book_stats.accum
+            ntiid_stats_map = accum.ntiid_stats_map
             concepts_usage = self._get_concept_tree_usage(concepts_hierarchy, ntiid_stats_map)
-            #usernames = book_stats.get_usernames_with_stats()
-            # TODO map concepts_usage with all book users
+            self._map_all_usernames_to_concepts_usage(usernames, concepts_usage)
+
+            concept_data = list()
+            for concept_ntiid, concept in concepts_usage.items():
+                estimated_consumption_time_in_minutes = concepts_metrics[concept_ntiid]['estimated_reading_time']
+                user_data = self._check_user_completion_on_a_concept(concept, estimated_consumption_time_in_minutes)
+                concept_name = concept['name']
+                concept_result = _ConceptProgressStat(concept_ntiid,
+                                                      concept_name,
+                                                      estimated_consumption_time_in_minutes,
+                                                      user_data)
+                concept_data.append(concept_result)
+        options['concept_data'] = concept_data
         return options
