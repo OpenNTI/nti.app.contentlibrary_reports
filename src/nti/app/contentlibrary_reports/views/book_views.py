@@ -263,6 +263,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
         user_data = list()
         for user_info in user_infos:
             total_view_time = usages[user_info.username]
+            total_view_time = self._get_total_view_time_in_minutes(total_view_time)
             is_complete = estimated_consumption_time \
                 and total_view_time >= estimated_consumption_time
             user_result = _UserConceptProgressStat(user_info,
@@ -270,6 +271,14 @@ class BookConceptReportPdf(BookProgressReportPdf):
                                                    is_complete)
             user_data.append(user_result)
         return user_data
+
+    def _get_total_view_time_in_minutes(self, total_view_time):
+        result = 0
+        if total_view_time:
+            in_minutes = total_view_time / 60
+            in_base = floor(in_minutes / self.VIEW_TIME_MINUTE_FLOOR)
+            result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
+        return result
 
     def __call__(self):
         self._check_access()
@@ -290,7 +299,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
             concept_data = list()
             for concept_ntiid, concept in concepts_usage.items():
-                estimated_consumption_time_in_minutes = concepts_metrics[concept_ntiid]['estimated_reading_time']
+                estimated_consumption_time_in_minutes = concepts_metrics[concept_ntiid]['normalized_estimated_reading_time']
                 user_data = self._check_user_completion_on_a_concept(concept, estimated_consumption_time_in_minutes)
                 concept_name = concept['name']
                 concept_result = _ConceptProgressStat(concept_ntiid,
