@@ -146,20 +146,22 @@ class BookConceptReportPdf(BookProgressReportPdf):
         concepts_metrics = certime.process()
         return concepts_metrics
 
-    def _get_concept_tree_usage(self, concepts, ntiid_stats_map):
-        if 'concepthierarchy' not in self.concepts:
+    def _get_concept_tree_usage(self, concepts_hierarchy, ntiid_stats_map):
+        if 'concepthierarchy' not in concepts_hierarchy:
             return None
-        tree = self.concept_hierachy['concepthierarchy']
+        tree = concepts_hierarchy['concepthierarchy']
         concepts_usage = {}
         if 'concepts' in tree:
             concepts = tree['concepts']
+            if 'name' not in concepts and 'concepts' in concepts:
+                concepts = concepts['concepts']
             for concept_ntiid, concept in concepts.items():
                 self._process_concept_tree(ntiid_stats_map, concept_ntiid, concept, concepts_usage)
         return concepts_usage
 
     def _process_concept_tree(self, ntiid_stats_map, concept_ntiid, concept, concepts_usage):
         cusage = {}
-        cusage['name'] = cusage['name']
+        cusage['name'] = concept['name']
         usages = self._get_users_concept_usage(concept['contentunitntiids'], ntiid_stats_map)
         cusage['usages'] = usages
         concepts_usage[concept_ntiid] = cusage
@@ -217,11 +219,11 @@ class BookConceptReportPdf(BookProgressReportPdf):
         accum = book_stats.accum
         ntiid_stats_map = accum.ntiid_stats_map
 
-        concepts = component.getUtility(IConcepts)
-        concepts_metrics = self._get_concept_estimated_access_time(values, concepts)
-
-        if book_stats is not None and concepts:
-            concepts_usage = self._get_concept_tree_usage(concepts, ntiid_stats_map)
+        uconcepts = component.getUtility(IConcepts)
+        concepts_hierarchy = uconcepts.process(self.context)
+        concepts_metrics = self._get_concept_estimated_access_time(values, concepts_hierarchy)
+        if book_stats is not None and concepts_hierarchy:
+            concepts_usage = self._get_concept_tree_usage(concepts_hierarchy, ntiid_stats_map)
             #usernames = book_stats.get_usernames_with_stats()
             # TODO map concepts_usage with all book users
         return options
