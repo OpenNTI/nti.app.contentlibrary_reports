@@ -221,8 +221,8 @@ class BookConceptReportPdf(BookProgressReportPdf):
         for unit_ntiid in content_unit_ntiids:
             if unit_ntiid in ntiid_stats_map:
                 user_stats = ntiid_stats_map[unit_ntiid].user_stats
-                for s_user in user_stats:
-                    total_view_time = user_stats[s_user].total_view_time
+                for s_user, user in user_stats.items():
+                    total_view_time = user.total_view_time
                     if s_user in user_concept_stats:
                         user_concept_stats[s_user] += total_view_time
                     else:
