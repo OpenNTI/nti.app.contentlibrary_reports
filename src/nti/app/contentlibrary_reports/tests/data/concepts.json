@@ -1,0 +1,19 @@
+{
+	"concepthierarchy": {
+		"concepts": {
+			"tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:NFPA_1072": {
+				"contentunitntiids": [],
+				"name": "NFPA 1072",
+				"concepts": {}
+			},
+			"tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:math": {
+				"contentunitntiids": [
+					"tag:nextthought.com,2011-10:IFSTA-HTML-sample_book.chapter:1",
+					"tag:nextthought.com,2011-10:IFSTA-HTML-sample_book.chapter:2"
+				],
+				"name": "math",
+				"concepts": {}
+			}
+		}
+	}
+}

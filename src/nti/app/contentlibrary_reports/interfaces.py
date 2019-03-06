@@ -84,3 +84,30 @@ class IContentUnitMetrics(interface.Interface):
         "unique_word_count": 266
     }
     """
+
+
+class IConcepts(interface.Interface):
+    """
+    An interface for utility to get concepts.json from content package
+    concepts.json contains information about concept tree (concept hierarchy and its concepts node) which consists of concepts ntiid and content unit ntiid where the concept is refered
+    For example:
+    {
+        "concepthierarchy": {
+            "concepts": {
+                "tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:NFPA_1072": {
+                    "contentunitntiids": [],
+                    "name": "NFPA 1072",
+                    "concepts": {}
+                },
+                "tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:math": {
+                    "contentunitntiids": [
+                        "tag:nextthought.com,2011-10:IFSTA-HTML-sample_book.chapter:1",
+                        "tag:nextthought.com,2011-10:IFSTA-HTML-sample_book.chapter:2"
+                    ],
+                    "name": "math",
+                    "concepts": {}
+                }
+            }
+        }
+    }
+    """
