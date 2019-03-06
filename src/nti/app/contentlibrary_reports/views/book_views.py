@@ -260,7 +260,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
                         if total_view_time:
                             # Ok, append our total_view times
                             if s_user in user_concept_stats and user_concept_stats[s_user]:
-                                total_view_time += user_concept_stats[s_user]
+                                total_view_time += user_concept_stats[s_user][0]
                         elif s_user in user_concept_stats:
                             # Use our existing time
                             total_view_time = user_concept_stats[s_user][0]
