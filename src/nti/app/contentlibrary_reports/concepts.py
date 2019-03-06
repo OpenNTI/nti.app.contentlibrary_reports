@@ -43,7 +43,7 @@ class ConceptsEstimatedReadingTime(object):
     def process(self):
         """
         This method traverses concept hierarchy and store information about estimated reading time for each concept in concept_metrics dictionary.
-        It returns concept_metrics that looks as follow the structure as follow:
+        It returns concept_metrics that follow the following structure:
         {
             concept_ntiid_1 : {
                 'normalized_estimated_reading_time' : int
