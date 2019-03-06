@@ -8,12 +8,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import itertools
 
 from collections import namedtuple
 
 from math import floor
-
-from copy import deepcopy
 
 from zope import component
 
@@ -39,6 +38,7 @@ from nti.dataserver.users import User
 from nti.app.contentlibrary_reports.interfaces import IConcepts
 
 from nti.app.contentlibrary_reports.concepts import ConceptsEstimatedReadingTime
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 
 logger = __import__('logging').getLogger(__name__)
@@ -148,7 +148,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
     <concept_data> = {concept_name, concept_estimated_time, user_data}
     """
 
-    report_title = _(u'Concept Progress Report')
+    report_title = _(u'Standards Progress Report')
 
     def _get_concept_estimated_access_time(self, values, concepts):
         """
@@ -242,14 +242,18 @@ class BookConceptReportPdf(BookProgressReportPdf):
         """
         user_concept_stats = {}
         for unit_ntiid in content_unit_ntiids:
-            if unit_ntiid in ntiid_stats_map:
-                user_stats = ntiid_stats_map[unit_ntiid].user_stats
-                for s_user, user in user_stats.items():
-                    total_view_time = user.total_view_time
-                    if s_user in user_concept_stats:
-                        user_concept_stats[s_user] += total_view_time
-                    else:
-                        user_concept_stats[s_user] = total_view_time
+            # Get data for our unit as well as any children for our unit
+            content_unit = find_object_with_ntiid(unit_ntiid)
+            for content_ntiid in itertools.chain((content_unit.ntiid,),
+                                                 content_unit.chidren):
+                if content_ntiid in ntiid_stats_map:
+                    user_stats = ntiid_stats_map[content_ntiid].user_stats
+                    for s_user, user in user_stats.items():
+                        total_view_time = user.total_view_time
+                        if s_user in user_concept_stats:
+                            user_concept_stats[s_user] += total_view_time
+                        else:
+                            user_concept_stats[s_user] = total_view_time
         return user_concept_stats
 
     def _aggregate_concept_usage(self, cparent_ntiid, cchild_ntiid, concepts_usage):

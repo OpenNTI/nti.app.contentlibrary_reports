@@ -7,7 +7,7 @@
         There is no user data for this book.
     </para>
     <para style="normal" spaceAfter=".2in" tal:condition="options/concept_data">
-        This report presents an overview of the learner progress on concepts.
+        This report presents an overview of learner progress on concepts.
     </para>
 
     <tal:block tal:repeat="concept options/concept_data">
