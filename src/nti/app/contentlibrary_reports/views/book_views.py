@@ -245,7 +245,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
             # Get data for our unit as well as any children for our unit
             content_unit = find_object_with_ntiid(unit_ntiid)
             for content_ntiid in itertools.chain((content_unit.ntiid,),
-                                                 content_unit.chidren):
+                                                 content_unit.children):
                 if content_ntiid in ntiid_stats_map:
                     user_stats = ntiid_stats_map[content_ntiid].user_stats
                     for s_user, user in user_stats.items():
