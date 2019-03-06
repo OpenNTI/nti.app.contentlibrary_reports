@@ -151,6 +151,23 @@ class BookConceptReportPdf(BookProgressReportPdf):
     report_title = _(u'Concept Progress Report')
 
     def _get_concept_estimated_access_time(self, values, concepts):
+        """
+        This method return concepts_metrics dictionary that contains information about estimated reading time for each concept (represented by concept ntiid).
+        concept_metrics looks as follow:
+        {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:NFPA_1072':
+            {
+                'normalized_estimated_reading_time': 0,
+                'name': u'NFPA 1072',
+                'estimated_reading_time': 0
+             },
+        u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:math':
+            {
+                'normalized_estimated_reading_time': 30,
+                'name': u'math',
+                'estimated_reading_time': 3.165
+            }
+        }
+        """
         cumetrics = component.getUtility(IContentUnitMetrics)
         metrics = cumetrics.process(self.context)
         cmtime = ContentConsumptionTime(metrics, values)
@@ -160,7 +177,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def _get_concept_tree_usage(self, concepts_hierarchy, ntiid_stats_map):
         """
-        Method to get usage statistic (total_view_time) on each concepts per user.
+        Method to get usage statistic (total_view_time) on each concept per user.
         It return concepts_usage dictionary that looks as follow:
         {
         'concept_ntiid_1': {
@@ -197,6 +214,12 @@ class BookConceptReportPdf(BookProgressReportPdf):
         return concepts_usage
 
     def _process_concept_tree(self, ntiid_stats_map, concept_ntiid, concept, concepts_usage):
+        """
+        This method recursively traverse concept and its subconcepts.
+        While traversing, the concepts_usage dictionary is updated with the information about users's total time view on each concept.
+        Users' total view time is acquired from ntiid_stats_map which is dictionary with content unit ntiids as its keys and nti.app.analytics.usage_stats.ResourceStats objects as its values.
+        Please check comment on method _get_concept_tree_usage to see the structure of concepts_usage.
+        """
         cusage = {}
         cusage['name'] = concept['name']
         usages = self._get_users_concept_usage(concept['contentunitntiids'], ntiid_stats_map)
@@ -231,7 +254,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def _aggregate_concept_usage(self, cparent_ntiid, cchild_ntiid, concepts_usage):
         """
-        This method aggregate users usage from sub/child concept to parent concept
+        This method aggregate users usage (total view time) from sub/child concept to parent concept
         """
         for user in concepts_usage[cchild_ntiid]['usages']:
             if user not in concepts_usage[cparent_ntiid]['usages']:
@@ -241,9 +264,34 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def _map_all_usernames_to_concepts_usage(self, usernames, concepts_usage):
         """
+        This method is to update users in concepts_usage.
         usernames list consists of all the book's usernames.
         However the concept['usage'] only list users that already read the particular unit where the concept is refered.
         We want to include all users in the concept['usage'] for the reporting.
+
+        For example:
+
+        Before running this method, concepts_usage looks as follow:
+        {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003': {
+            'usages': {u'dortje': 3, u'brownie': 3, u'brownie3': 85},
+            'name': u'NFPA 1003'
+            },
+        u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002': {
+            'usages': {},
+            'name': u'NFPA 1002'
+            }
+        }
+
+        After running this method, concepts_usage looks as follow:
+        {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003': {
+            'usages': {u'dortje': 3, u'brownie': 3, u'brownie3': 85, u'tandirura': 0},
+            'name': u'NFPA 1003'
+            },
+        u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002': {
+            'usages': {u'dortje': 0, u'brownie': 0, u'brownie3': 0, u'tandirura': 0},
+            'name': u'NFPA 1002'
+            }
+        }
         """
         users = set(usernames)
         for concept in list(concepts_usage.values()):
@@ -254,6 +302,10 @@ class BookConceptReportPdf(BookProgressReportPdf):
             usage.update(users_not_in_usage_dict)
 
     def _check_user_completion_on_a_concept(self, concept, estimated_consumption_time):
+        """
+        This method check if a user already spends time reading a concept more than estimated consumption/reading time.
+        The method return list of namedtuple _UserConceptProgressStat that consist of user_info, total_view_time in minutes floored to 15 minutes mark and a boolean is_complete.
+        """
         user_infos = list()
         usages = concept['usages']
         for username in usages:
@@ -273,6 +325,9 @@ class BookConceptReportPdf(BookProgressReportPdf):
         return user_data
 
     def _get_total_view_time_in_minutes(self, total_view_time):
+        """
+        Total view time obtain from ntiid_stats_map is in second. We want to set it to minutes and floor it to 15 minutes mark.
+        """
         result = 0
         if total_view_time:
             in_minutes = total_view_time / 60
@@ -307,5 +362,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
                                                       estimated_consumption_time_in_minutes,
                                                       user_data)
                 concept_data.append(concept_result)
-        options['concept_data'] = concept_data
+            options['concept_data'] = concept_data
+        else:
+            options['concept_data'] = None
         return options

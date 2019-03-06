@@ -41,6 +41,37 @@ class ConceptsEstimatedReadingTime(object):
         self.cmtime = cmtime
 
     def process(self):
+        """
+        This method traverses concept hierarchy and store information about estimated reading time for each concept in concept_metrics dictionary.
+        It returns concept_metrics that looks as follow the structure as follow:
+        {
+            concept_ntiid_1 : {
+                'normalized_estimated_reading_time' : int
+                'name' : string
+                'estimated_reading_time': float
+            },
+            concept_ntiid_2 : {
+                'normalized_estimated_reading_time' : int
+                'name' : string
+                'estimated_reading_time': float
+            },
+            ....
+        }
+        For example:
+        {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:NFPA_1072':
+            {
+                'normalized_estimated_reading_time': 0,
+                'name': u'NFPA 1072',
+                'estimated_reading_time': 0
+             },
+        u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:math':
+            {
+                'normalized_estimated_reading_time': 30,
+                'name': u'math',
+                'estimated_reading_time': 3.165
+            }
+        }
+        """
         concepts_metrics = {}
         if 'concepthierarchy' in self.concept_hierachy:
             tree = self.concept_hierachy['concepthierarchy']
@@ -53,6 +84,12 @@ class ConceptsEstimatedReadingTime(object):
         return concepts_metrics
 
     def _traverse_concept_tree(self, concept_ntiid, concept, concepts_metrics):
+        """
+        This method recursively traverses concept and its subconcepts.
+        While traversing each concept, concepts_metrics dictionary is updated with the value of estimated reading time and normalized estimated reading time.
+        Values on parent concept are accumulated from its children/sub concepts.
+        Please check method process to see concepts_metrics structure.
+        """
         cmetric = {}
         cmetric['name'] = concept['name']
         metrics = self._count_estimated_reading_time(concept['contentunitntiids'])
