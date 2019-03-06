@@ -127,7 +127,7 @@ class BookProgressReportPdf(AbstractBookReportView):
 
 _UserConceptProgressStat = \
     namedtuple('UserConceptProgressStat',
-               ('userinfo', 'total_view_time', 'is_complete'))
+               ('userinfo', 'total_view_time', 'last_accessed', 'is_complete'))
 
 _ConceptProgressStat = \
     namedtuple('ConceptProgressStat',
@@ -152,7 +152,8 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def _get_concept_estimated_access_time(self, values, concepts):
         """
-        This method return concepts_metrics dictionary that contains information about estimated reading time for each concept (represented by concept ntiid).
+        This method return concepts_metrics dictionary that contains information
+        about estimated reading time for each concept (represented by concept ntiid).
         concept_metrics looks as follow:
         {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-sample_book.concept.concept:NFPA_1072':
             {
@@ -216,9 +217,14 @@ class BookConceptReportPdf(BookProgressReportPdf):
     def _process_concept_tree(self, ntiid_stats_map, concept_ntiid, concept, concepts_usage):
         """
         This method recursively traverse concept and its subconcepts.
-        While traversing, the concepts_usage dictionary is updated with the information about users's total time view on each concept.
-        Users' total view time is acquired from ntiid_stats_map which is dictionary with content unit ntiids as its keys and nti.app.analytics.usage_stats.ResourceStats objects as its values.
-        Please check comment on method _get_concept_tree_usage to see the structure of concepts_usage.
+        While traversing, the concepts_usage dictionary is updated with the
+        information about users's total time view on each concept as well
+        as the last accessed time for that concept.
+        Users' total view time is acquired from ntiid_stats_map which is
+        dictionary with content unit ntiids as its keys and
+        nti.app.analytics.usage_stats.ResourceStats objects as its values.
+        Please check comment on method _get_concept_tree_usage to see the
+        structure of concepts_usage.
         """
         cusage = {}
         cusage['name'] = concept['name']
@@ -238,7 +244,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
         @type  ntiid_stats_map    : dictionary
         @param ntiid_stats_map    : key is content unit ntiid and value is nti.app.analytics.usage_stats.ResourceStats object
         @rtype : dictionary
-        @return: total time spent on a concept by user
+        @return: (total time spent on a concept by user, user last_view_time)
         """
         user_concept_stats = {}
         for unit_ntiid in content_unit_ntiids:
@@ -249,36 +255,65 @@ class BookConceptReportPdf(BookProgressReportPdf):
                 content_ntiid = content_item.ntiid
                 if content_ntiid in ntiid_stats_map:
                     user_stats = ntiid_stats_map[content_ntiid].user_stats
-                    for s_user, user in user_stats.items():
-                        total_view_time = user.total_view_time
+                    for s_user, user_stat in user_stats.items():
+                        total_view_time = user_stat.total_view_time
                         if total_view_time:
+                            # Ok, append our total_view times
                             if s_user in user_concept_stats and user_concept_stats[s_user]:
                                 total_view_time += user_concept_stats[s_user]
-                            user_concept_stats[s_user] = total_view_time
+                        elif s_user in user_concept_stats:
+                            # Use our existing time
+                            total_view_time = user_concept_stats[s_user][0]
+
+                        # Now the last_accessed time
+                        unit_last_view_time = getattr(user_stat, 'last_view_time')
+                        if unit_last_view_time:
+                            # We have a time; if we have a current last time, compare and
+                            # take the max. Otherwise, this is our new basis.
+                            if s_user in user_concept_stats:
+                                current_last_view_time = user_concept_stats[s_user][1]
+                                if current_last_view_time:
+                                    unit_last_view_time = max(current_last_view_time,
+                                                              unit_last_view_time)
+                        elif s_user in user_concept_stats:
+                            # Use our existing time
+                            unit_last_view_time = user_concept_stats[s_user][1]
+                        user_concept_stats[s_user] = (total_view_time, unit_last_view_time)
         return user_concept_stats
 
     def _aggregate_concept_usage(self, cparent_ntiid, cchild_ntiid, concepts_usage):
         """
-        This method aggregate users usage (total view time) from sub/child concept to parent concept
+        This method aggregate users usage (total view time, last_accessed)
+        from sub/child concept to parent concept
         """
         for user in concepts_usage[cchild_ntiid]['usages']:
             if user not in concepts_usage[cparent_ntiid]['usages']:
                 concepts_usage[cparent_ntiid]['usages'][user] = concepts_usage[cchild_ntiid]['usages'][user]
             else:
-                concepts_usage[cparent_ntiid]['usages'][user] += concepts_usage[cchild_ntiid]['usages'][user]
+                parent_total_view_time, parent_last_accessed = concepts_usage[cparent_ntiid]['usages'][user]
+                total_view_time, last_accessed = concepts_usage[cchild_ntiid]['usages'][user]
+                new_view_time = parent_total_view_time + total_view_time
+                if last_accessed and parent_last_accessed:
+                    new_last_accessed = max(last_accessed, parent_last_accessed)
+                elif last_accessed:
+                    new_last_accessed = last_accessed
+                elif parent_last_accessed:
+                    new_last_accessed = parent_last_accessed
+                concepts_usage[cparent_ntiid]['usages'][user] = (new_view_time, new_last_accessed)
 
     def _map_all_usernames_to_concepts_usage(self, usernames, concepts_usage):
         """
         This method is to update users in concepts_usage.
         usernames list consists of all the book's usernames.
-        However the concept['usage'] only list users that already read the particular unit where the concept is refered.
+        However the concept['usage'] only list users that already read the
+        particular unit where the concept is refered.
         We want to include all users in the concept['usage'] for the reporting.
 
         For example:
 
         Before running this method, concepts_usage looks as follow:
         {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003': {
-            'usages': {u'dortje': 3, u'brownie': 3, u'brownie3': 85},
+            'usages': {u'dortje': (3, <last_accessed>), u'brownie': (3, <last_accessed>), u'brownie3': (85, <last_accessed>)},
             'name': u'NFPA 1003'
             },
         u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002': {
@@ -289,11 +324,11 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
         After running this method, concepts_usage looks as follow:
         {u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1003': {
-            'usages': {u'dortje': 3, u'brownie': 3, u'brownie3': 85, u'tandirura': 0},
+            'usages': {u'dortje': (3, <last_accessed>), u'brownie': (3, <last_accessed>), u'brownie3': (85, <last_accessed>), u'tandirura': (0, None)},
             'name': u'NFPA 1003'
             },
         u'tag:nextthought.com,2011-10:IFSTA-NTIConcept-IFSTA_Book_Aircraft_Rescue_and_Fire_Fighting_Sixth_Edition.concept.concept:NFPA_1002': {
-            'usages': {u'dortje': 0, u'brownie': 0, u'brownie3': 0, u'tandirura': 0},
+            'usages': {u'dortje': (0, <last_accessed>), u'brownie': (0, <last_accessed>), u'brownie3': (0, <last_accessed>), u'tandirura': (0, None)},
             'name': u'NFPA 1002'
             }
         }
@@ -308,8 +343,10 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def _check_user_completion_on_a_concept(self, concept, estimated_consumption_time):
         """
-        This method check if a user already spends time reading a concept more than estimated consumption/reading time.
-        The method return list of namedtuple _UserConceptProgressStat that consist of user_info, total_view_time in minutes floored to 15 minutes mark and a boolean is_complete.
+        This method check if a user already spends time reading a concept more
+        than estimated consumption/reading time. The method return list of
+        namedtuple _UserConceptProgressStat that consist of user_info,
+        total_view_time in minutes floored to 15 minutes mark and a boolean is_complete.
         """
         user_infos = list()
         usages = concept['usages']
@@ -319,19 +356,21 @@ class BookConceptReportPdf(BookProgressReportPdf):
         user_infos = sorted(user_infos)
         user_data = list()
         for user_info in user_infos:
-            total_view_time = usages[user_info.username]
+            total_view_time, last_accessed = usages[user_info.username]
             total_view_time = self._get_total_view_time_in_minutes(total_view_time)
             is_complete = estimated_consumption_time \
-                and total_view_time >= estimated_consumption_time
+                      and total_view_time >= estimated_consumption_time
             user_result = _UserConceptProgressStat(user_info,
                                                    total_view_time,
+                                                   last_accessed,
                                                    is_complete)
             user_data.append(user_result)
         return user_data
 
     def _get_total_view_time_in_minutes(self, total_view_time):
         """
-        Total view time obtain from ntiid_stats_map is in second. We want to set it to minutes and floor it to 15 minutes mark.
+        Total view time obtain from ntiid_stats_map is in second. We want to
+        set it to minutes and floor it to 15 minutes mark.
         """
         result = 0
         if total_view_time:

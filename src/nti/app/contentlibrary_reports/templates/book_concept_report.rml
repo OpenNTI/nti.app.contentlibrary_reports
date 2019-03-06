@@ -16,7 +16,7 @@
             Concept Name
         </h2>
         <blockTable style='default'
-                colWidths="25% 25% 25% 25%"
+                colWidths"20% 17% 28% 15% 20%"
                 tal:condition="concept/user_data"
                 repeatRows="1">
             <tr>
@@ -24,6 +24,7 @@
                 <td><para style="header">Username</para></td>
                 <td><para style="header">Email</para></td>
                 <td><para style="header">View Time (min)</para></td>
+                <td><para style="header_r">Last Accessed</para></td>
             </tr>
             <tr tal:repeat="item concept/user_data">
                 <td><para style="data" tal:content="item/userinfo/display">Name</para></td>
@@ -31,6 +32,8 @@
                 <td><para style="data" tal:content="item/userinfo/email">Email</para></td>
                 <td align="left"
                 tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'"><tal:block tal:content="item/total_view_time">view_time</tal:block> / <tal:block tal:content="concept/concept_estimated_time">expected_time</tal:block></td>
+                <td align="right" tal:content="item/last_accessed | default"
+                tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'">Last Seen</td>
             </tr>
         </blockTable>
         <nextPage />
