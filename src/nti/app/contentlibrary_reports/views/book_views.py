@@ -338,7 +338,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
             usage = concept['usages']
             users_in_usage = set(usage.keys())
             users_not_in_usage = users - users_in_usage
-            users_not_in_usage_dict = {username: 0 for username in users_not_in_usage}
+            users_not_in_usage_dict = {username: (0, None) for username in users_not_in_usage}
             usage.update(users_not_in_usage_dict)
 
     def _check_user_completion_on_a_concept(self, concept, estimated_consumption_time):
