@@ -30,7 +30,7 @@
                 <td><para style="data" tal:content="item/userinfo/display">Name</para></td>
                 <td><para style="data" tal:content="item/userinfo/username">Username</para></td>
                 <td><para style="data" tal:content="item/userinfo/email">Email</para></td>
-                <td align="left"
+                <td align="right"
                 tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'"><tal:block tal:content="item/total_view_time">view_time</tal:block> / <tal:block tal:content="concept/concept_estimated_time">expected_time</tal:block></td>
                 <td align="right" tal:content="item/last_accessed | default"
                     tal:attributes="fontColor python: '#2ecc71' if item.is_complete else '#757474'">Last Seen</td>
