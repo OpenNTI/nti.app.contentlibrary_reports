@@ -47,9 +47,6 @@ class AbstractBookReportView(AbstractReportView):
         book_name = self.book_name()
         return "%s %s %s %s" % (title, book_name, date, self.timezone_info_str)
 
-    def generate_header_timezone(self):
-        return 'Times in %s' % self.timezone_displayname
-
     def readInput(self, value=None):
         if self.request.body:
             values = super(AbstractBookReportView, self).readInput(value)
