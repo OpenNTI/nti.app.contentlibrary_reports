@@ -89,6 +89,11 @@ class BookProgressReportPdf(AbstractBookReportView):
             expected_consumption_time = ctime.get_normalize_estimated_time_in_minutes(ntiid)
         return expected_consumption_time
 
+    def _get_top_header_options(self):
+        data = [(self.book_name(),),
+                ('Times in %s ' % self.timezone_displayname,)]
+        return super(BookProgressReportPdf,self).get_top_header_options(data, col_widths=[1])
+
     def __call__(self):
         self._check_access()
         values = self.readInput()
@@ -122,6 +127,8 @@ class BookProgressReportPdf(AbstractBookReportView):
                 user_data.append(user_result)
             options['user_data'] = user_data
             options['estimated_consumption_time'] = estimated_consumption_time
+
+        options.update(self._get_top_header_options())
         return options
 
 
@@ -409,4 +416,5 @@ class BookConceptReportPdf(BookProgressReportPdf):
             options['concept_data'] = concept_data
         else:
             options['concept_data'] = None
+        options.update(self._get_top_header_options())
         return options

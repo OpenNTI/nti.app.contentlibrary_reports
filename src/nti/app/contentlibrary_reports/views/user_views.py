@@ -25,7 +25,7 @@ from nti.app.contentlibrary_reports import MessageFactory as _
 
 from nti.app.contentlibrary_reports.views.view_mixins import AbstractBookReportView
 
-from nti.app.contenttypes.reports.views.view_mixins import get_header_options
+from nti.app.contenttypes.reports.views.table_utils import TableCell
 
 from nti.dataserver.authorization import is_site_admin
 
@@ -213,11 +213,11 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             options['aggregate_content_unit_count'] = aggregate_content_unit_count
 
         # Top right header_table data on the cover page.
-        top_header_data = [('Name:', options['user'].display or ''),
-                           ('Login:', options['user'].username or ''),
-                           ('Book:', self.book_name() or ''),
-                           ('Times in:', self.timezone_displayname)]
-        options['top_header_data'] = top_header_data
-        header_options = get_header_options(input_data=top_header_data)
+        data = [ ('Name:', options['user'].display or ''),
+                 ('Login:', options['user'].username or ''),
+                 ('Book:', self.book_name() or ''),
+                 (TableCell('Times in %s ' % self.timezone_displayname, colspan=2),'NTI_COLSPAN') ]
+
+        header_options = self.get_top_header_options(data=data)
         options.update(header_options)
         return options
