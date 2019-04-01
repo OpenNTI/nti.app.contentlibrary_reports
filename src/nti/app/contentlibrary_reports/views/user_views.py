@@ -25,6 +25,8 @@ from nti.app.contentlibrary_reports import MessageFactory as _
 
 from nti.app.contentlibrary_reports.views.view_mixins import AbstractBookReportView
 
+from nti.app.contenttypes.reports.views.table_utils import TableCell
+
 from nti.dataserver.authorization import is_site_admin
 
 from nti.dataserver.interfaces import ISiteAdminUtility
@@ -209,4 +211,13 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             options['last_accessed'] = self._get_display_last_view_time(last_accessed)
             options['aggregate_complete_count'] = aggregate_complete_count
             options['aggregate_content_unit_count'] = aggregate_content_unit_count
+
+        # Top right header_table data on the cover page.
+        data = [ ('Name:', options['user'].display or ''),
+                 ('Login:', options['user'].username or ''),
+                 ('Book:', self.book_name() or ''),
+                 (TableCell('Times in %s ' % self.timezone_displayname, colspan=2),'NTI_COLSPAN') ]
+
+        header_options = self.get_top_header_options(data=data)
+        options.update(header_options)
         return options
