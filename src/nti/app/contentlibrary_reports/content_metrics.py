@@ -22,8 +22,10 @@ class ContentUnitMetrics(object):
     def process(self, context):
         fs_root = context.ContentPackages[0]
         sibling = fs_root.make_sibling_key('content_metrics.json')
-        content_metrics = sibling.readContentsAsJson()
-        return content_metrics
+        if sibling.exists():
+            content_metrics = sibling.readContentsAsJson()
+            return content_metrics
+        return None
 
 
 class ContentConsumptionTime(object):

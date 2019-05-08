@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 from collections import namedtuple
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 
 from zope import component
@@ -178,13 +180,17 @@ class UserBookProgressReportPdf(AbstractBookReportView):
 
     def __call__(self):
         self._check_access()
+        cmetrics = component.getUtility(IContentUnitMetrics)
+        metrics = cmetrics.process(self.book)
+        if metrics is None:
+            raise hexc.HTTPNotFound()
+
         values = self.readInput()
         options = self.options
         options['user'] = self.build_user_info(self.user)
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
-        cmetrics = component.getUtility(IContentUnitMetrics)
-        metrics = cmetrics.process(self.book)
+
         cmtime = ContentConsumptionTime(metrics, values)
         try:
             # XXX: First package
