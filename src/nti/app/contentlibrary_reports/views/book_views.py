@@ -16,6 +16,8 @@ from math import floor
 
 from zope import component
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 
 from nti.app.contentlibrary.interfaces import IResourceUsageStats
@@ -94,8 +96,15 @@ class BookProgressReportPdf(AbstractBookReportView):
                 ('Times in %s ' % self.timezone_displayname,)]
         return super(BookProgressReportPdf,self).get_top_header_options(data, col_widths=[1])
 
+    def _check_content_metrics(self):
+        cumetrics = component.getUtility(IContentUnitMetrics)
+        metrics = cumetrics.process(self.context)
+        if metrics is None:
+            raise hexc.HTTPNotFound()
+
     def __call__(self):
         self._check_access()
+        self._check_content_metrics()
         values = self.readInput()
         options = self.options
         book_stats = IResourceUsageStats(self.book, None)
@@ -388,6 +397,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
 
     def __call__(self):
         self._check_access()
+        self._check_content_metrics()
         values = self.readInput()
         options = self.options
         book_stats = IResourceUsageStats(self.book, None)
