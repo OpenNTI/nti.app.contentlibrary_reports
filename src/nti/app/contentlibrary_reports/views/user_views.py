@@ -143,7 +143,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                     if section_view_time > self._get_expected_consumption_time(cmtime, content_unit.ntiid):
                         complete_content_count += 1
                     total_view_time += section_view_time
-                    section_last_view_time = getattr(content_stats, 'last_view_time')
+                    section_last_view_time = getattr(content_stats, 'last_view_time', 0)
                     if section_last_view_time:
                         if last_view_time is None:
                             last_view_time = section_last_view_time
