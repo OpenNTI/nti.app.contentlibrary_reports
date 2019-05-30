@@ -22,6 +22,7 @@ from nti.appserver.pyramid_authorization import has_permission
 
 logger = __import__('logging').getLogger(__name__)
 
+MAX_FILENAME_LEN = 255  # 255 char max length (OSX (APFS) and Win10 (NTFS))
 
 class AbstractBookReportView(AbstractReportView):
     """
@@ -32,6 +33,24 @@ class AbstractBookReportView(AbstractReportView):
     def _check_access(self):
         if not has_permission(ACT_VIEW_BOOK_REPORTS, self.book, self.request):
             raise HTTPForbidden()
+
+    @property
+    def filename(self):
+        # Format: <prefix>_<title>.pdf
+        # Prefix gets any portion not taken by _<title>.pdf
+        prefix = self.book_name() and self.book_name()[:self._max_prefix_length]
+        basename = self.report_title if not prefix else u'{0}_{1}'.format(prefix, self.report_title)
+        return u'{0}.pdf'.format(basename[:self._max_title_length])
+
+    @property
+    def _max_prefix_length(self):
+        # MAX less room for "_<title>.pdf"
+        return max(MAX_FILENAME_LEN - (len(self.report_title) + 5), 0)
+
+    @property
+    def _max_title_length(self):
+        # MAX less room for ".pdf"
+        return MAX_FILENAME_LEN - 4
 
     @Lazy
     def book(self):
