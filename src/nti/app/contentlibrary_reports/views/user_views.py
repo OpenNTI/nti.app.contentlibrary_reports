@@ -12,6 +12,8 @@ from collections import namedtuple
 
 from pyramid import httpexceptions as hexc
 
+from pyramid.httpexceptions import HTTPForbidden
+
 from pyramid.view import view_config
 
 from zope import component
@@ -68,6 +70,23 @@ class UserBookProgressReportPdf(AbstractBookReportView):
     #: 15 minute floor; this will probably need to be site driven
     VIEW_TIME_MINUTE_FLOOR = 15
 
+    @property
+    def _user_filename_part(self):
+        user_info = self.build_user_info(self.user)
+        return self.user_as_affix(self.user, user_info=user_info)
+
+    @property
+    def filename(self):
+        user_prefix = self._user_filename_part
+        book_part = super(UserBookProgressReportPdf, self).filename
+        return self._build_filename([user_prefix, book_part])
+
+    @property
+    def _max_title_length(self):
+        # Max - the username part
+        result = super(UserBookProgressReportPdf, self)._max_title_length
+        return result - len(self._user_filename_part)
+
     def _can_admin_user(self, user):
         # Verify a site admin is administering a user in their site.
         result = True
@@ -78,7 +97,8 @@ class UserBookProgressReportPdf(AbstractBookReportView):
 
     def _check_access(self):
         super(UserBookProgressReportPdf, self)._check_access()
-        self._can_admin_user(self.user)
+        if not self._can_admin_user(self.user):
+            raise HTTPForbidden()
 
     @Lazy
     def user(self):
