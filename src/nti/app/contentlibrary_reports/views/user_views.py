@@ -79,7 +79,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
     def filename(self):
         user_prefix = self._user_filename_part
         book_part = super(UserBookProgressReportPdf, self).filename
-        return self._build_filename([user_prefix, book_part])
+        return self._build_filename([user_prefix, book_part], extension='')
 
     @property
     def _max_title_length(self):
