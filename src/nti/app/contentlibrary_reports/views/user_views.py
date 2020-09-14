@@ -12,6 +12,8 @@ from collections import namedtuple
 
 from pyramid import httpexceptions as hexc
 
+from pyramid.config import not_
+
 from pyramid.httpexceptions import HTTPForbidden
 
 from pyramid.view import view_config
@@ -27,6 +29,7 @@ from nti.app.contentlibrary_reports import VIEW_USER_BOOK_PROGRESS_REPORT
 
 from nti.app.contentlibrary_reports import MessageFactory as _
 
+from nti.app.contentlibrary_reports.views.view_mixins import ReportCSVMixin
 from nti.app.contentlibrary_reports.views.view_mixins import AbstractBookReportView
 
 from nti.app.contenttypes.reports.views.table_utils import TableCell
@@ -56,8 +59,17 @@ _UserBookProgressStat = \
                 'has_expected_consumption'))
 
 
-@view_config(context=IUserBundleRecord,
-             name=VIEW_USER_BOOK_PROGRESS_REPORT)
+@view_config(route_name='objects.generic.traversal',
+             renderer="../templates/user_book_report.rml",
+             context=IUserBundleRecord,
+             name=VIEW_USER_BOOK_PROGRESS_REPORT,
+             accept='application/pdf',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             renderer="../templates/user_book_report.rml",
+             context=IUserBundleRecord,
+             name=VIEW_USER_BOOK_PROGRESS_REPORT,
+             request_param='format=application/pdf')
 class UserBookProgressReportPdf(AbstractBookReportView):
     """
     For a given bundle (assume one package? iterate through
@@ -198,20 +210,18 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             expected_consumption_time = cmtime.get_normalize_estimated_time_in_minutes(ntiid)
         return expected_consumption_time
 
-    def __call__(self):
-        self._check_access()
+    def _get_stats(self):
         cmetrics = component.getUtility(IContentUnitMetrics)
         metrics = cmetrics.process(self.book)
         if metrics is None:
             raise hexc.HTTPNotFound()
 
         values = self.readInput()
-        options = self.options
-        options['user'] = self.build_user_info(self.user)
         book_stats = component.queryMultiAdapter((self.book, self.user),
                                                  IResourceUsageStats)
 
         cmtime = ContentConsumptionTime(metrics, values)
+        chapter_data = list()
         try:
             # XXX: First package
             package = self.book.ContentPackages[0]
@@ -219,13 +229,21 @@ class UserBookProgressReportPdf(AbstractBookReportView):
             package = None
         if book_stats is not None and package is not None:
             stat_map = {x.ntiid: x for x in book_stats.get_stats()}
-            chapter_data = list()
-            aggregate_complete_count = 0
-            aggregate_content_unit_count = 0
-            last_accessed = None
             for content_unit in package.children or ():
                 chapter_progress_stat = self._get_chapter_stats(content_unit, stat_map, cmtime)
                 chapter_data.append(chapter_progress_stat)
+        return chapter_data
+
+    def __call__(self):
+        self._check_access()
+        options = self.options
+        options['user'] = self.build_user_info(self.user)
+        chapter_stats = self._get_stats()
+        if chapter_stats:
+            aggregate_complete_count = 0
+            aggregate_content_unit_count = 0
+            last_accessed = None
+            for chapter_progress_stat in chapter_stats or ():
                 aggregate_complete_count += chapter_progress_stat.complete_content_count
                 aggregate_content_unit_count += chapter_progress_stat.content_unit_count
                 if last_accessed is None:
@@ -233,7 +251,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                 elif chapter_progress_stat.last_view_time_date:
                     last_accessed = max(last_accessed,
                                         chapter_progress_stat.last_view_time_date)
-            options['chapter_data'] = chapter_data
+            options['chapter_data'] = chapter_stats
             options['last_accessed'] = self._get_display_last_view_time(last_accessed)
             options['aggregate_complete_count'] = aggregate_complete_count
             options['aggregate_content_unit_count'] = aggregate_content_unit_count
@@ -247,3 +265,67 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         header_options = self.get_top_header_options(data=data)
         options.update(header_options)
         return options
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IUserBundleRecord,
+             name=VIEW_USER_BOOK_PROGRESS_REPORT,
+             accept='text/csv',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             context=IUserBundleRecord,
+             name=VIEW_USER_BOOK_PROGRESS_REPORT,
+             request_param='format=text/csv')
+class UserBookProgressReportCSV(UserBookProgressReportPdf, ReportCSVMixin):
+
+    @Lazy
+    def header_field_map(self):
+        return {
+            'Title': 'title',
+            'Topics Completed': 'topics_completed',
+            'Topic Count': 'topic_count',
+            'Progress (min)': 'progress_min',
+            'Progress Required (min)': 'progress_required_min',
+            'Last Accessed': 'last_accessed'
+        }
+
+    @Lazy
+    def header_row(self):
+        return ('Title', 'Topics Completed', 'Topic Count',
+                'Progress (min)', 'Progress Required (min)', 'Last Accessed')
+
+    @Lazy
+    def show_supplemental_info(self):
+        return False
+
+
+    def _get_report_data(self):
+        chapter_stats = self._get_stats()
+        result = []
+        # Map this into our header dict
+        # total_view_time is in min
+        for chapter_stat in chapter_stats or ():
+            if chapter_stat.has_expected_consumption:
+                result.append({'title': chapter_stat.title,
+                               'topics_completed': chapter_stat.complete_content_count,
+                               'topic_count': chapter_stat.content_unit_count,
+                               'progress_min': chapter_stat.total_view_time,
+                               'progress_required_min': chapter_stat.chapter_consumption_time,
+                               'last_accessed': chapter_stat.last_accessed})
+            else:
+                result.append({'title': chapter_stat.title,
+                               'topics_completed': '',
+                               'topic_count': '',
+                               'progress_min': '',
+                               'progress_required_min': '',
+                               'last_accessed': ''})
+        return result
+
+    @property
+    def filename(self):
+        user_prefix = self._user_filename_part
+        book_part = super(UserBookProgressReportPdf, self).filename
+        return self._build_filename([user_prefix, book_part], extension='csv')
+
+    def _do_call(self):
+        return self._do_create_response(filename=self.filename)
