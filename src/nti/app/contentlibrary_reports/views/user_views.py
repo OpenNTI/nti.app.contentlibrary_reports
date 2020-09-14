@@ -234,8 +234,7 @@ class UserBookProgressReportPdf(AbstractBookReportView):
                 chapter_data.append(chapter_progress_stat)
         return chapter_data
 
-    def __call__(self):
-        self._check_access()
+    def _do_call(self):
         options = self.options
         options['user'] = self.build_user_info(self.user)
         chapter_stats = self._get_stats()
@@ -265,6 +264,10 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         header_options = self.get_top_header_options(data=data)
         options.update(header_options)
         return options
+
+    def __call__(self):
+        self._check_access()
+        return self._do_call()
 
 
 @view_config(route_name='objects.generic.traversal',
