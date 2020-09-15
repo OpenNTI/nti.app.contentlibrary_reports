@@ -60,13 +60,11 @@ _UserBookProgressStat = \
 
 
 @view_config(route_name='objects.generic.traversal',
-             renderer="../templates/user_book_report.rml",
              context=IUserBundleRecord,
              name=VIEW_USER_BOOK_PROGRESS_REPORT,
              accept='application/pdf',
              request_param=not_('format'))
 @view_config(route_name='objects.generic.traversal',
-             renderer="../templates/user_book_report.rml",
              context=IUserBundleRecord,
              name=VIEW_USER_BOOK_PROGRESS_REPORT,
              request_param='format=application/pdf')
