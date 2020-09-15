@@ -46,12 +46,16 @@ class AbstractBookReportView(AbstractReportView):
             raise HTTPForbidden()
 
     @property
-    def filename(self):
+    def book_filename_part(self):
         # Format: <prefix>_<title>.pdf
         # Prefix gets any portion not taken by _<title>.pdf
         prefix = self.book_name() and self.book_name()[:self._max_prefix_length]
-        basename = self.report_title if not prefix else u'{0}_{1}'.format(prefix, self.report_title)
-        return u'{0}.pdf'.format(basename[:self._max_title_length])
+        result = self.report_title if not prefix else u'{0}_{1}'.format(prefix, self.report_title)
+        return result
+
+    @property
+    def filename(self):
+        return u'{0}.pdf'.format(self.book_filename_part[:self._max_title_length])
 
     @property
     def _max_prefix_length(self):

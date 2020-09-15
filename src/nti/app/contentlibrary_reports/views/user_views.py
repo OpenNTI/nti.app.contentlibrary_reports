@@ -88,8 +88,8 @@ class UserBookProgressReportPdf(AbstractBookReportView):
     @property
     def filename(self):
         user_prefix = self._user_filename_part
-        book_part = super(UserBookProgressReportPdf, self).filename
-        return self._build_filename([user_prefix, book_part], extension='')
+        book_part = self.book_filename_part
+        return self._build_filename([user_prefix, book_part])
 
     @property
     def _max_title_length(self):
@@ -325,8 +325,8 @@ class UserBookProgressReportCSV(UserBookProgressReportPdf, ReportCSVMixin):
     @property
     def filename(self):
         user_prefix = self._user_filename_part
-        book_part = super(UserBookProgressReportPdf, self).filename
-        return self._build_filename([user_prefix, book_part], extension='csv')
+        book_part = self.book_filename_part
+        return self._build_filename([user_prefix, book_part], extension='.csv')
 
     def _do_call(self):
         return self._do_create_response(filename=self.filename)
