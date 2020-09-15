@@ -199,7 +199,7 @@ class UserBookProgressReportCSV(BookProgressReportPdf, ReportCSVMixin):
         for user_stat in user_data_list or ():
             result.append({'real_name': user_stat.userinfo.display,
                            'username': user_stat.userinfo.username,
-                           'email': user_stat.userinfo.username.email,
+                           'email': user_stat.userinfo.email,
                            'progress_min': user_stat.total_view_time,
                            'progress_required_min': estimated_consumption_time,
                            'last_accessed': user_stat.last_accessed})
