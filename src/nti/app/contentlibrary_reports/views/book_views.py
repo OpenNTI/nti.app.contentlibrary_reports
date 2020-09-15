@@ -14,11 +14,15 @@ from collections import namedtuple
 
 from math import floor
 
+from pyramid.config import not_
+
 from zope import component
 
 from pyramid import httpexceptions as hexc
 
 from pyramid.view import view_config
+
+from zope.cachedescriptors.property import Lazy
 
 from nti.app.contentlibrary.interfaces import IResourceUsageStats
 
@@ -27,6 +31,7 @@ from nti.app.contentlibrary_reports import MessageFactory as _
 from nti.app.contentlibrary_reports import VIEW_BOOK_CONCEPT_REPORT
 from nti.app.contentlibrary_reports import VIEW_BOOK_PROGRESS_REPORT
 
+from nti.app.contentlibrary_reports.views.view_mixins import ReportCSVMixin
 from nti.app.contentlibrary_reports.views.view_mixins import AbstractBookReportView
 
 from nti.app.contentlibrary_reports.interfaces import IContentUnitMetrics
@@ -40,6 +45,7 @@ from nti.dataserver.users import User
 from nti.app.contentlibrary_reports.interfaces import IConcepts
 
 from nti.app.contentlibrary_reports.concepts import ConceptsEstimatedReadingTime
+
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 
@@ -51,8 +57,15 @@ _UserBookProgressStat = \
                ('userinfo', 'total_view_time', 'last_accessed', 'is_complete'))
 
 
-@view_config(context=IContentPackageBundle,
-             name=VIEW_BOOK_PROGRESS_REPORT)
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_PROGRESS_REPORT,
+             accept='application/pdf',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_PROGRESS_REPORT,
+             request_param='format=application/pdf')
 class BookProgressReportPdf(AbstractBookReportView):
 
     report_title = _(u'Progress Overview Report')
@@ -102,13 +115,16 @@ class BookProgressReportPdf(AbstractBookReportView):
         if metrics is None:
             raise hexc.HTTPNotFound()
 
-    def __call__(self):
-        self._check_access()
+    def _get_stats(self):
+        """
+        Return a tuple of user_data (_UserBookProgressStat objects) and
+        estimated_consumption_time.
+        """
         self._check_content_metrics()
         values = self.readInput()
-        options = self.options
         book_stats = IResourceUsageStats(self.book, None)
         estimated_consumption_time = self._get_book_estimated_access_time(values)
+        user_data_list = list()
         if book_stats is not None:
             usernames = book_stats.get_usernames_with_stats()
             user_infos = list()
@@ -116,7 +132,6 @@ class BookProgressReportPdf(AbstractBookReportView):
                 user = User.get_user(username)
                 user_infos.append(self.build_user_info(user))
             user_infos = sorted(user_infos)
-            user_data = list()
             for user_info in user_infos:
                 user_stats = book_stats.get_stats_for_user(user_info.username)
                 last_view_time = self._get_last_view_time(user_stats)
@@ -127,18 +142,75 @@ class BookProgressReportPdf(AbstractBookReportView):
                 # population is driven from view stats). Should we exclude
                 # these users too?
                 is_complete = total_view_time \
-                    and estimated_consumption_time \
-                    and total_view_time >= estimated_consumption_time
+                          and estimated_consumption_time \
+                          and total_view_time >= estimated_consumption_time
                 user_result = _UserBookProgressStat(user_info,
                                                     total_view_time,
                                                     last_view_time,
                                                     is_complete)
-                user_data.append(user_result)
-            options['user_data'] = user_data
-            options['estimated_consumption_time'] = estimated_consumption_time
+                user_data_list.append(user_result)
+        return user_data_list, estimated_consumption_time
 
+    def _do_call(self):
+        options = self.options
+        user_data_list, estimated_consumption_time = self._get_stats()
+        options['user_data'] = user_data_list
+        options['estimated_consumption_time'] = estimated_consumption_time
         options.update(self._get_top_header_options())
         return options
+
+    def __call__(self):
+        self._check_access()
+        return self._do_call()
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_PROGRESS_REPORT,
+             accept='text/csv',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_PROGRESS_REPORT,
+             request_param='format=text/csv')
+class UserBookProgressReportCSV(BookProgressReportPdf, ReportCSVMixin):
+
+    @Lazy
+    def header_field_map(self):
+        return {
+            'Name': 'display_name',
+            'Username': 'username',
+            'Email': 'email',
+            'Progress (min)': 'progress_min',
+            'Progress Required (min)': 'progress_required_min',
+            'Last Accessed': 'last_accessed'
+        }
+
+    @Lazy
+    def header_row(self):
+        return ('Name', 'Username', 'Email',
+                'Progress (min)', 'Progress Required (min)', 'Last Accessed')
+
+    def _get_report_data(self):
+        user_data_list, estimated_consumption_time = self._get_stats()
+        result = []
+        # Map this into our header dict
+        # total_view_time is in min
+        for user_stat in user_data_list or ():
+            result.append({'real_name': user_stat.userinfo.display,
+                           'username': user_stat.userinfo.username,
+                           'email': user_stat.userinfo.username.email,
+                           'progress_min': user_stat.total_view_time,
+                           'progress_required_min': estimated_consumption_time,
+                           'last_accessed': user_stat.last_accessed})
+        return result
+
+    @property
+    def filename(self):
+        return self._build_filename([self.book_filename_part], extension='.csv')
+
+    def _do_call(self):
+        return self._do_create_response(filename=self.filename)
 
 
 _UserConceptProgressStat = \

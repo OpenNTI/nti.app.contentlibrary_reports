@@ -93,6 +93,9 @@ class ReportCSVMixin(object):
 
     filename_suffix = 'csv'
 
+    #: False for now, these fields would need to come back in `_get_report_data`
+    show_supplemental_info = False
+
     @Lazy
     def supplemental_field_utility(self):
         return component.queryUtility(IProfileDisplayableSupplementalFields)
@@ -110,7 +113,7 @@ class ReportCSVMixin(object):
 
     def _get_supplemental_header(self):
         result = []
-        if self.supplemental_field_utility:
+        if self.show_supplemental_info and self.supplemental_field_utility:
             display_dict = self.supplemental_field_utility.get_field_display_values()
             supp_fields = self.supplemental_field_utility.get_ordered_fields()
             for supp_field in supp_fields:
@@ -119,7 +122,7 @@ class ReportCSVMixin(object):
 
     def _get_supplemental_data(self, user_report_data):
         data = []
-        if self.supplemental_field_utility:
+        if self.show_supplemental_info and self.supplemental_field_utility:
             supp_fields = self.supplemental_field_utility.get_ordered_fields()
             for supp_field in supp_fields:
                 data.append(user_report_data.get(supp_field))

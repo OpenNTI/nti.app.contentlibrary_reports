@@ -279,6 +279,8 @@ class UserBookProgressReportPdf(AbstractBookReportView):
              request_param='format=text/csv')
 class UserBookProgressReportCSV(UserBookProgressReportPdf, ReportCSVMixin):
 
+    show_supplemental_info = False
+
     @Lazy
     def header_field_map(self):
         return {
@@ -294,11 +296,6 @@ class UserBookProgressReportCSV(UserBookProgressReportPdf, ReportCSVMixin):
     def header_row(self):
         return ('Title', 'Topics Completed', 'Topic Count',
                 'Progress (min)', 'Progress Required (min)', 'Last Accessed')
-
-    @Lazy
-    def show_supplemental_info(self):
-        return False
-
 
     def _get_report_data(self):
         chapter_stats = self._get_stats()
