@@ -197,7 +197,7 @@ class UserBookProgressReportCSV(BookProgressReportPdf, ReportCSVMixin):
         # Map this into our header dict
         # total_view_time is in min
         for user_stat in user_data_list or ():
-            result.append({'real_name': user_stat.userinfo.display,
+            result.append({'display_name': user_stat.userinfo.display,
                            'username': user_stat.userinfo.username,
                            'email': user_stat.userinfo.email,
                            'progress_min': user_stat.total_view_time,
