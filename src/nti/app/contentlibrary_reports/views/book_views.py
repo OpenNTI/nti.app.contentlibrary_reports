@@ -568,7 +568,7 @@ class BookConceptReportCSV(BookConceptReportPdf, ReportCSVMixin):
             # iterate over the first user info set.
             # Should be sorted by last_name, first_name.
             user_info_one = self._stats[0].user_data
-            for idx, user_data in user_info_one:
+            for idx, user_data in enumerate(user_info_one):
                 userinfo = user_data.userinfo
                 user_row = {'display_name': userinfo.display,
                             'username': userinfo.username,
