@@ -524,7 +524,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
              context=IContentPackageBundle,
              name=VIEW_BOOK_CONCEPT_REPORT,
              request_param='format=text/csv')
-class BookConceptReportCSV(BookProgressReportPdf, ReportCSVMixin):
+class BookConceptReportCSV(BookConceptReportPdf, ReportCSVMixin):
 
     @Lazy
     def _stats(self):
@@ -556,15 +556,6 @@ class BookConceptReportCSV(BookProgressReportPdf, ReportCSVMixin):
             for header in ('Progress (min)', 'Progress Required (min)', 'Last Accessed'):
                 result.append('%s %s' % (concept_name, header))
         return result
-
-    # FIXME remove
-    _UserConceptProgressStat = \
-        namedtuple('UserConceptProgressStat',
-               ('userinfo', 'total_view_time', 'last_accessed', 'is_complete'))
-
-    _ConceptProgressStat = \
-        namedtuple('ConceptProgressStat',
-               ('concept_ntiid', 'concept_name', 'concept_estimated_time', 'user_data'))
 
     def _get_report_data(self):
         result = []
