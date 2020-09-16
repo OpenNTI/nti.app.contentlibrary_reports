@@ -576,7 +576,7 @@ class BookConceptReportCSV(BookConceptReportPdf, ReportCSVMixin):
                 for concept_data in self._stats:
                     # Get the user_data for our index and validate everything lines up
                     user_data = concept_data.user_data[idx]
-                    assert userinfo.username == user_data.userinfo.username
+                    assert userinfo.username == user_data.userinfo.username, '%s - %s' % (userinfo.username, user_data.userinfo.username)
                     concept_name = concept_data.concept_name
                     user_row['%s_progress_min' % concept_name] = user_data.total_view_time
                     user_row['%s_progress_required_min' % concept_name] = concept_data.concept_estimated_time
