@@ -173,7 +173,7 @@ class BookProgressReportPdf(AbstractBookReportView):
              context=IContentPackageBundle,
              name=VIEW_BOOK_PROGRESS_REPORT,
              request_param='format=text/csv')
-class UserBookProgressReportCSV(BookProgressReportPdf, ReportCSVMixin):
+class BookProgressReportCSV(BookProgressReportPdf, ReportCSVMixin):
 
     @Lazy
     def header_field_map(self):
@@ -222,8 +222,15 @@ _ConceptProgressStat = \
                ('concept_ntiid', 'concept_name', 'concept_estimated_time', 'user_data'))
 
 
-@view_config(context=IContentPackageBundle,
-             name=VIEW_BOOK_CONCEPT_REPORT)
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_CONCEPT_REPORT,
+             accept='application/pdf',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_CONCEPT_REPORT,
+             request_param='format=application/pdf')
 class BookConceptReportPdf(BookProgressReportPdf):
     """
     Extending our book progress report. This report will want to
@@ -432,7 +439,7 @@ class BookConceptReportPdf(BookProgressReportPdf):
     def _check_user_completion_on_a_concept(self, concept, estimated_consumption_time):
         """
         This method check if a user already spends time reading a concept more
-        than estimated consumption/reading time. The method return list of
+        than estimated consumption/reading time. The method returns a list of
         namedtuple _UserConceptProgressStat that consist of user_info,
         total_view_time in minutes floored to 15 minutes mark and a boolean is_complete.
         """
@@ -467,17 +474,15 @@ class BookConceptReportPdf(BookProgressReportPdf):
             result = int(in_base * self.VIEW_TIME_MINUTE_FLOOR)
         return result
 
-    def __call__(self):
-        self._check_access()
+    def _get_stats(self):
         self._check_content_metrics()
         values = self.readInput()
-        options = self.options
         book_stats = IResourceUsageStats(self.book, None)
 
         uconcepts = component.getUtility(IConcepts)
         concepts_hierarchy = uconcepts.process(self.context)
         concepts_metrics = self._get_concept_estimated_access_time(values, concepts_hierarchy)
-
+        result = list()
         if book_stats and concepts_hierarchy:
             usernames = book_stats.get_usernames_with_stats()
             accum = book_stats.accum
@@ -485,18 +490,112 @@ class BookConceptReportPdf(BookProgressReportPdf):
             concepts_usage = self._get_concept_tree_usage(concepts_hierarchy, ntiid_stats_map)
             self._map_all_usernames_to_concepts_usage(usernames, concepts_usage)
 
-            concept_data = list()
             for concept_ntiid, concept in concepts_usage.items():
                 estimated_consumption_time_in_minutes = concepts_metrics[concept_ntiid]['normalized_estimated_reading_time']
-                user_data = self._check_user_completion_on_a_concept(concept, estimated_consumption_time_in_minutes)
+                user_data = self._check_user_completion_on_a_concept(concept,
+                                                                     estimated_consumption_time_in_minutes)
                 concept_name = concept['name']
                 concept_result = _ConceptProgressStat(concept_ntiid,
                                                       concept_name,
                                                       estimated_consumption_time_in_minutes,
                                                       user_data)
-                concept_data.append(concept_result)
-            options['concept_data'] = concept_data
-        else:
-            options['concept_data'] = None
+                result.append(concept_result)
+        result = sorted(result, key=lambda x: x.concept_name.lower())
+        return result
+
+    def _do_call(self):
+        options = self.options
+        concept_data = self._get_stats()
+        options['concept_data'] = concept_data
         options.update(self._get_top_header_options())
         return options
+
+    def __call__(self):
+        self._check_access()
+        return self._do_call()
+
+
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_CONCEPT_REPORT,
+             accept='text/csv',
+             request_param=not_('format'))
+@view_config(route_name='objects.generic.traversal',
+             context=IContentPackageBundle,
+             name=VIEW_BOOK_CONCEPT_REPORT,
+             request_param='format=text/csv')
+class BookConceptReportCSV(BookProgressReportPdf, ReportCSVMixin):
+
+    @Lazy
+    def _stats(self):
+        return self._get_stats()
+
+    @Lazy
+    def _concept_names(self):
+        # These are sorted
+        return [x.concept_name for x in self._stats]
+
+    @Lazy
+    def header_field_map(self):
+        result = {
+            'Name': 'display_name',
+            'Username': 'username',
+            'Email': 'email',
+        }
+        for concept_name in self._concept_names:
+            for header, field in (('Progress (min)', 'progress_min'),
+                                  ('Progress Required (min)', 'progress_required_min'),
+                                  ('Last Accessed', 'last_accessed')):
+                result['%s %s' % (concept_name, header)] = '%s_%s' % (concept_name, field)
+        return result
+
+    @Lazy
+    def header_row(self):
+        result = ['Name', 'Username', 'Email']
+        for concept_name in self._concept_names:
+            for header in ('Progress (min)', 'Progress Required (min)', 'Last Accessed'):
+                result.append('%s %s' % (concept_name, header))
+        return result
+
+    # FIXME remove
+    _UserConceptProgressStat = \
+        namedtuple('UserConceptProgressStat',
+               ('userinfo', 'total_view_time', 'last_accessed', 'is_complete'))
+
+    _ConceptProgressStat = \
+        namedtuple('ConceptProgressStat',
+               ('concept_ntiid', 'concept_name', 'concept_estimated_time', 'user_data'))
+
+    def _get_report_data(self):
+        result = []
+        # The stats we get our grouped by concept, but we'll want to return user rows.
+        # Map this into our header dict
+        # total_view_time is in min
+        if self._stats:
+            # All of these user_infos *should* be the same length, with empty data
+            # if users do not have data for a concept. Therefore, we arbitrarily
+            # iterate over the first user info set.
+            # Should be sorted by last_name, first_name.
+            user_info_one = self._stats[0].user_data
+            for idx, user_data in user_info_one:
+                userinfo = user_data.userinfo
+                user_row = {'display_name': userinfo.display,
+                            'username': userinfo.username,
+                            'email': userinfo.email}
+                for concept_data in self._stats:
+                    # Get the user_data for our index and validate everything lines up
+                    user_data = concept_data.user_data[idx]
+                    assert userinfo.username == user_data.userinfo.username
+                    concept_name = concept_data.concept_name
+                    user_row['%s_progress_min' % concept_name] = user_data.total_view_time
+                    user_row['%s_progress_required_min' % concept_name] = concept_data.concept_estimated_time
+                    user_row['%s_last_accessed' % concept_name] = user_data.last_accessed
+                result.append(user_row)
+        return result
+
+    @property
+    def filename(self):
+        return self._build_filename([self.book_filename_part], extension='.csv')
+
+    def _do_call(self):
+        return self._do_create_response(filename=self.filename)
