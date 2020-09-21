@@ -18,7 +18,7 @@
 			<td><para style="header">Name</para></td>
 			<td><para style="header">Username</para></td>
 			<td><para style="header">Email</para></td>
-			<td><para style="header_r">View Time (min)</para></td>
+			<td><para style="header_r">Progress (min)</para></td>
 			<td><para style="header_r">Last Accessed</para></td>
 		</tr>
 		<tr tal:repeat="item options/user_data">
