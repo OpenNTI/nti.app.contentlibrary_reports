@@ -202,6 +202,11 @@ class UserBookProgressReportPdf(AbstractBookReportView):
         Return the expected consumption time, in minutes for
         the given ntiid.
         """
+        # ContentUnits may not have content metrics, see how we compute the metrics:
+        # nti.contentrendering.plastexpackage.extractors.statistics._ContentUnitStatistics
+        if ntiid not in cmtime.content_metrics:
+            return 0
+
         expected_consumption_time = cmtime.content_metrics[ntiid].get('expected_consumption_time')
         if expected_consumption_time is None:
             # No override
